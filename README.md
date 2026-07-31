@@ -1,119 +1,124 @@
-# [<img src="./browser/icon.png" width="40" align="left" alt="Equicord">](https://github.com/Equicord/Equicord) Equicord
+# [<img src="./browser/icon.png" width="40" align="left" alt="PatchCord">](https://github.com/PatchCordOfficial/PatchCord) PatchCord
 
-[![Equibop](https://img.shields.io/badge/Equibop-grey?style=flat)](https://github.com/Equicord/Equibop)
-[![Tests](https://github.com/Equicord/Equicord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Equicord/Equicord/actions/workflows/test.yml)
-[![Discord](https://img.shields.io/discord/1173279886065029291.svg?color=768AD4&label=Discord&logo=discord&logoColor=white)](https://equicord.org/discord)
+[![Tests](https://github.com/PatchCordOfficial/PatchCord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/PatchCordOfficial/PatchCord/actions/workflows/test.yml)
+[![GitHub](https://img.shields.io/badge/GitHub-PatchCord-black?style=flat\&logo=github)](https://github.com/PatchCordOfficial/PatchCord)
 
-Equicord is a fork of [Vencord](https://github.com/Vendicated/Vencord), with over 300+ plugins.
+PatchCord is a fork of [Equicord](https://github.com/Equicord/Equicord), which itself is a fork of [Vencord](https://github.com/Vendicated/Vencord). It expands upon both projects with additional plugins, features, UI improvements, and quality-of-life enhancements while maintaining compatibility with the Discord desktop client.
 
-You can join our [Discord server](https://equicord.org/discord) for commits, changes, chatting, or even support.
+You can visit the **GitHub repository** for updates, releases, issues, and discussions:
 
-### Included Plugins
+https://github.com/PatchCordOfficial/PatchCord
 
-Our included plugins can be found [here](https://equicord.org/plugins).
+## Included Plugins
+
+PatchCord includes all of the plugins from Equicord, alongside additional PatchCord-exclusive plugins and improvements.
 
 ## Installing / Uninstalling
 
-Windows
+### Windows
 
-- [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl.exe)
-- [CLI](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli.exe)
+* GUI Installer *(Coming Soon)*
+* CLI Installer *(Coming Soon)*
 
-MacOS
+### macOS
 
-- [X64 GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-darwin-x64.zip)
-- [ARM64 GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-darwin-arm64.zip)
+* Intel *(Coming Soon)*
+* Apple Silicon *(Coming Soon)*
 
-Linux
+### Linux
 
-- [GUI](https://github.com/Equicord/Equilotl/releases/latest/download/Equilotl-x11)
-- [CLI](https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli-Linux)
-- [AUR](https://aur.archlinux.org/packages?O=0&K=equicord)
+* GUI *(Coming Soon)*
+* CLI *(Coming Soon)*
 
-```shell
-bash -c "$(curl -sS https://raw.githubusercontent.com/Equicord/Equicord/refs/heads/main/misc/install.sh)"
-```
-
-## Installing Equicord Devbuild
+## Building PatchCord
 
 ### Dependencies
 
-[Git](https://git-scm.com/download) and [Node.JS LTS](https://nodejs.dev/en/) are required.
+The following are required:
 
-Install `pnpm`:
+* [Git](https://git-scm.com/download)
+* [Node.js LTS](https://nodejs.org/)
+* pnpm
 
-> :exclamation: This next command may need to be run as admin/root depending on your system, and you may need to close and reopen your terminal for pnpm to be in your PATH.
+Install **pnpm**:
 
-```shell
+```sh
 npm i -g pnpm
 ```
 
-> :exclamation: **IMPORTANT** Make sure you aren't using an admin/root terminal from here onwards. It **will** mess up your Discord/Equicord instance and you **will** most likely have to reinstall.
+> **Important:** From this point onward, do **not** use an Administrator or root terminal, as it can cause permission issues with your Discord installation.
 
-Clone Equicord:
+Clone PatchCord:
 
-```shell
-git clone https://github.com/Equicord/Equicord
-cd Equicord
+```sh
+git clone https://github.com/PatchCordOfficial/PatchCord.git
+cd PatchCord
 ```
 
 Install dependencies:
 
-```shell
+```sh
 pnpm install --frozen-lockfile
 ```
 
-Build Equicord:
+Build PatchCord:
 
-```shell
+```sh
 pnpm build
 ```
 
-Inject Equicord into your desktop client:
+Inject PatchCord into your desktop client:
 
-```shell
+```sh
 pnpm inject
 ```
 
-Build Equicord for web:
+Build the browser extension:
 
-```shell
+```sh
 pnpm buildWeb
 ```
 
-After building Equicord's web extension, locate the appropriate ZIP file in the `dist` directory and follow your browser’s guide for installing custom extensions, if supported.
+After building the web extension, locate the generated ZIP inside the `dist` directory and install it according to your browser's extension loading instructions.
 
-Note: Firefox extension zip requires Firefox for developers
+> Firefox requires the Developer Edition (or compatible builds) for unsigned extensions.
+
+## Documentation
+
+Documentation is available at:
+
+**https://patchcord.itssolar.dev/docs.html**
 
 ## Credits
 
-Thank you to [Vendicated](https://github.com/Vendicated) for creating [Vencord](https://github.com/Vendicated/Vencord) & [Suncord](https://github.com/verticalsync/Suncord) by [verticalsync](https://github.com/verticalsync) for helping when needed.
+A huge thank you to the developers who made PatchCord possible.
+
+* [Vendicated](https://github.com/Vendicated) — Creator of **Vencord**
+* [Equicord Contributors](https://github.com/Equicord/Equicord) — Maintainers of **Equicord**
+* [verticalsync](https://github.com/verticalsync) — Creator of **Suncord**
+* Everyone who has contributed to PatchCord
 
 ## Star History
 
-<a href="https://star-history.com/#Equicord/Equicord&Timeline">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Equicord/Equicord&type=Timeline&theme=dark&sealed_token=64drv2U7WiV6dQ5VRbOZdxHT3mRzxUzhVvfm5qt1VRpGjVPje0PbObjibX2FYe4zd-h36lCAGZ873gAgb_5_tAzUBixUVbtaLHqy1fNH6PkQP_PqPdKztatlI2s17T9IUFzRyhYynmJ1-H4idFFzEAMN1gRZlVvvmJ71P0LovJPOIqTT7uHIubWcHzxC" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Equicord/Equicord&type=Timeline&sealed_token=64drv2U7WiV6dQ5VRbOZdxHT3mRzxUzhVvfm5qt1VRpGjVPje0PbObjibX2FYe4zd-h36lCAGZ873gAgb_5_tAzUBixUVbtaLHqy1fNH6PkQP_PqPdKztatlI2s17T9IUFzRyhYynmJ1-H4idFFzEAMN1gRZlVvvmJ71P0LovJPOIqTT7uHIubWcHzxC" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Equicord/Equicord&type=Timeline&sealed_token=64drv2U7WiV6dQ5VRbOZdxHT3mRzxUzhVvfm5qt1VRpGjVPje0PbObjibX2FYe4zd-h36lCAGZ873gAgb_5_tAzUBixUVbtaLHqy1fNH6PkQP_PqPdKztatlI2s17T9IUFzRyhYynmJ1-H4idFFzEAMN1gRZlVvvmJ71P0LovJPOIqTT7uHIubWcHzxC" />
-  </picture>
+<a href="https://star-history.com/#PatchCordOfficial/PatchCord&Timeline">
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=PatchCordOfficial/PatchCord&type=Timeline" />
 </a>
 
 ## Disclaimer
 
-Discord is trademark of Discord Inc., and solely mentioned for the sake of descriptivity.
-Mentioning it does not imply any affiliation with or endorsement by Discord Inc.
-Vencord is not connected to Equicord and as such, all donation links go to Vendicated's donation link.
+Discord is a trademark of Discord Inc. It is mentioned solely for descriptive purposes and does not imply any affiliation with or endorsement by Discord Inc.
+
+PatchCord is an independent community project based on the open-source work of Vencord and Equicord. It is not affiliated with Discord Inc., Vencord, or Equicord.
 
 <details>
-<summary>Using Equicord violates Discord's terms of service</summary>
+<summary>Using PatchCord violates Discord's Terms of Service</summary>
 
-Client modifications are against Discord’s Terms of Service.
+Like all Discord client modifications, PatchCord technically violates Discord's Terms of Service.
 
-However, Discord is pretty indifferent about them and there are no known cases of users getting banned for using client mods! So you should generally be fine if you don’t use plugins that implement abusive behaviour. But no worries, all inbuilt plugins are safe to use!
+However, there are currently no known cases of users being banned solely for using PatchCord, Equicord, or Vencord. As long as you avoid plugins that automate abusive behavior or break Discord's rules, the risk is generally considered low.
 
-Regardless, if your account is essential to you and getting disabled would be a disaster for you, you should probably not use any client mods (not exclusive to Equicord), just to be safe.
+That said, if your Discord account is especially important to you, using the official Discord client is always the safest option.
 
-Additionally, make sure not to post screenshots with Equicord in a server where you might get banned for it.
+You should also avoid posting screenshots showing PatchCord in communities where client modifications are prohibited.
 
 </details>
