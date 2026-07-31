@@ -13,33 +13,29 @@ import { Button } from "@components/Button";
 import { Divider } from "@components/Divider";
 import { FormSwitch } from "@components/FormSwitch";
 import { Heading } from "@components/Heading";
-import { FolderIcon, GithubIcon, LogIcon, PaintbrushIcon, RestartIcon } from "@components/Icons";
+import { FolderIcon, GithubIcon, LogIcon, PaintbrushIcon, RestartIcon, OpenExternalIcon } from "@components/Icons";
 import { Notice } from "@components/Notice";
 import { Paragraph } from "@components/Paragraph";
 import { openContributorModal, openPluginModal, SettingsTab, wrapTab } from "@components/settings";
 import { QuickAction, QuickActionCard } from "@components/settings/QuickAction";
 import { SpecialCard } from "@components/settings/SpecialCard";
 import BadgeAPI from "@plugins/_api/badges";
-import { gitRemote } from "@shared/vencordUserAgent";
 import { DONOR_ROLE_ID, GUILD_ID, IS_WINDOWS, VC_DONOR_ROLE_ID, VC_GUILD_ID } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
 import { isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
-import { Alerts, GuildMemberStore, React, useMemo, UserStore } from "@webpack/common";
+import { Alerts, GuildMemberStore, React, UserStore } from "@webpack/common";
 
-import { DonateButtonComponent } from "./DonateButton";
+import { subscribeToOnlineCount } from "../../../../patchcordplugins/patchcordBroadcasts/index";
 import { MacOSVibrancySettings } from "./MacVibrancySettings";
 import { NotificationSection } from "./NotificationSettings";
+import { PatchcordBanner } from "./PatchcordBanner";
 import { WindowsMaterialSettings } from "./WindowsMaterialSettings";
 
-const DEFAULT_DONATE_IMAGE = "https://cdn.discordapp.com/emojis/1026533090627174460.png";
-const SHIGGY_DONATE_IMAGE = "https://equicord.org/assets/favicon.png";
+import { PC_ICON_DATA_URL } from "@components/Icons/PatchCordIcon";
+const COZY_CONTRIB_IMAGE = PC_ICON_DATA_URL;
 
-const VENNIE_DONATOR_IMAGE = "https://cdn.discordapp.com/emojis/1238120638020063377.png";
-const COZY_CONTRIB_IMAGE = "https://cdn.discordapp.com/emojis/1026533070955872337.png";
-
-const DONOR_BACKGROUND_IMAGE = "https://media.discordapp.net/stickers/1311070116305436712.png?size=2048";
 const CONTRIB_BACKGROUND_IMAGE = "https://media.discordapp.net/stickers/1311070166481895484.png?size=2048";
 
 const cl = classNameFactory("vc-vencord-tab-");
@@ -156,43 +152,41 @@ function Switches() {
 }
 
 function EquicordSettings() {
-    const donateImage = useMemo(() =>
-        Math.random() > 0.5 ? DEFAULT_DONATE_IMAGE : SHIGGY_DONATE_IMAGE,
-        []
-    );
-
     const user = UserStore?.getCurrentUser();
+    const [onlineCount, setOnlineCount] = React.useState(0);
+
+    React.useEffect(() => {
+        // Subscribe to live online users count updates
+        const unsubscribe = subscribeToOnlineCount(setOnlineCount);
+        return unsubscribe;
+    }, []);
 
     return (
         <SettingsTab>
-            {(isEquicordDonor(user?.id) || isVencordDonor(user?.id)) ? (
-                <SpecialCard
-                    title="Donations"
-                    subtitle="Thank you for donating!"
-                    description={
-                        isEquicordDonor(user?.id) && isVencordDonor(user?.id)
-                            ? "All Vencord users can see your Vencord donor badge, and Equicord users can see your Equicord donor badge. To change your Vencord donor badge, contact @vending.machine. For your Equicord donor badge, make a ticket in Equicord's server."
-                            : isVencordDonor(user?.id)
-                                ? "All Vencord users can see your badge! You can manage your perks by messaging @vending.machine."
-                                : "All Equicord users can see your badge! You can manage your perks by making a ticket in Equicord's server."
-                    }
-                    cardImage={VENNIE_DONATOR_IMAGE}
-                    backgroundImage={DONOR_BACKGROUND_IMAGE}
-                    backgroundColor="#ED87A9"
-                >
-                    <DonateButtonComponent donated={true} />
-                </SpecialCard>
-            ) : (
-                <SpecialCard
-                    title="Support the Project"
-                    description="Please consider supporting the development of Equicord by donating!"
-                    cardImage={donateImage}
-                    backgroundImage={DONOR_BACKGROUND_IMAGE}
-                    backgroundColor="#c3a3ce"
-                >
-                    <DonateButtonComponent />
-                </SpecialCard>
-            )}
+            <PatchcordBanner />
+
+            <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "8px 16px",
+                background: "var(--background-modifier-accent)",
+                borderRadius: 8,
+                fontWeight: 600,
+                color: "var(--text-normal)",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                marginTop: 16,
+                width: "fit-content"
+            }}>
+                <div style={{
+                    width: 10,
+                    height: 10,
+                    backgroundColor: "#3ba55c", // Discord green
+                    borderRadius: "50%",
+                    boxShadow: "0 0 8px #3ba55c"
+                }} />
+                {onlineCount} Users Online
+            </div>
             {isAnyPluginDev(user?.id) && (
                 <SpecialCard
                     title="Contributions"
@@ -246,13 +240,14 @@ function EquicordSettings() {
                     />
                 )}
                 <QuickAction
-                    Icon={GithubIcon}
-                    text="View Source Code"
-                    action={() =>
-                        VencordNative.native.openExternal(
-                            "https://github.com/" + gitRemote,
-                        )
-                    }
+                    Icon={OpenExternalIcon}
+                    text="Donate"
+                    action={() => VencordNative.native.openExternal('https://ko-fi.com/itssolardev')}
+                />
+                <QuickAction
+                    Icon={OpenExternalIcon}
+                    text="Discord Invite"
+                    action={() => VencordNative.native.openExternal('https://discord.com/invite/TtGDxzXr3c')}
                 />
             </QuickActionCard>
 

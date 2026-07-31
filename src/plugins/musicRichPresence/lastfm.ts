@@ -6,10 +6,7 @@
 
 import { Logger } from "@utils/Logger";
 
-import { ScrobblerBackend, settings, TrackData } from ".";
-
-// Last.fm API keys are essentially public information and have no access to your account, so including one here is fine.
-const LASTFM_API_KEY = "790c37d90400163a5a5fe00d6ca32ef0";
+import { ScrobblerBackend, TrackData } from ".";
 
 const logger = new Logger("MusicRichPresence/LastFM");
 
@@ -19,12 +16,12 @@ export const LastFMScrobbler: ScrobblerBackend = {
     name: "Last.FM",
     id: "lastfm",
 
-    async fetchTrackData(): Promise<TrackData | null> {
+    async fetchTrackData(username: string, apiKey: string): Promise<TrackData | null> {
         try {
             const params = new URLSearchParams({
                 method: "user.getrecenttracks",
-                api_key: settings.store.apiKey || LASTFM_API_KEY,
-                user: settings.store.username!,
+                api_key: apiKey,
+                user: username,
                 limit: "1",
                 format: "json"
             });

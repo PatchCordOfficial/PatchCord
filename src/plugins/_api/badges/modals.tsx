@@ -12,6 +12,7 @@ import { Paragraph } from "@components/Paragraph";
 import { DonateButton, TranslateButton } from "@components/settings";
 import { Margins } from "@utils/margins";
 import { Modal, openModal } from "@webpack/common";
+import { PC_ICON_DATA_URL } from "@components/Icons/PatchCordIcon";
 
 export function VencordDonorModal() {
     openModal(props => (
@@ -41,23 +42,23 @@ export function VencordDonorModal() {
                     <Flex>
                         <img
                             role="presentation"
-                            src="https://cdn.discordapp.com/emojis/1026533070955872337.png"
+                            src={PC_ICON_DATA_URL}
                             alt=""
                             style={{ margin: "auto" }}
                         />
                         <img
                             role="presentation"
-                            src="https://cdn.discordapp.com/emojis/1026533090627174460.png"
+                            src={PC_ICON_DATA_URL}
                             alt=""
                             style={{ margin: "auto" }}
                         />
                     </Flex>
                     <div style={{ padding: "1em" }}>
                         <Paragraph>
-                            This Badge is a special perk for Vencord Donors
+                            This Badge is a special perk for PatchCord Users
                         </Paragraph>
                         <Paragraph className={Margins.top20}>
-                            Please consider supporting the development of Vencord by becoming a donor. It would mean a lot!!
+                            Please consider supporting the development of PatchCord by becoming a donor. It would mean a lot :3
                         </Paragraph>
                     </div>
                 </div>
@@ -75,7 +76,7 @@ export function EquicordDonorModal() {
     openModal(props => (
         <ErrorBoundary noop onError={() => {
             props.onClose();
-            VencordNative.native.openExternal("https://github.com/sponsors/thororen1234");
+            VencordNative.native.openExternal("https://ko-fi.com/itssolardev");
         }}>
             <Modal
                 {...props}
@@ -90,7 +91,7 @@ export function EquicordDonorModal() {
                     >
                         <Flex justifyContent="center" alignItems="center" gap="0.5em">
                             <Heart />
-                            Equicord Donor
+                            PatchCord User
                         </Flex>
                     </Heading>
                 }
@@ -99,23 +100,17 @@ export function EquicordDonorModal() {
                     <Flex>
                         <img
                             role="presentation"
-                            src="https://cdn.discordapp.com/emojis/1026533070955872337.png"
-                            alt=""
-                            style={{ margin: "auto" }}
-                        />
-                        <img
-                            role="presentation"
-                            src="https://cdn.discordapp.com/emojis/1026533090627174460.png"
+                            src={PC_ICON_DATA_URL}
                             alt=""
                             style={{ margin: "auto" }}
                         />
                     </Flex>
                     <div style={{ padding: "1em" }}>
                         <Paragraph>
-                            This Badge is a special perk for Equicord (Not Vencord) Donors
+                            This Badge is a special perk for PatchCord Users. It is a way to show your support for the development of PatchCord and its community.
                         </Paragraph>
                         <Paragraph className={Margins.top20}>
-                            Please consider supporting the development of Equicord by becoming a donor. It would mean a lot! :3
+                            Please consider supporting the development of PatchCord by becoming a donor. It would mean a lot! :3
                         </Paragraph>
                     </div>
                 </div>

@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-import { NavContextMenuPatchCallback } from "@api/ContextMenu";
+import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { isPluginEnabled } from "@api/PluginManager";
 import ExpressionClonerPlugin from "@plugins/expressionCloner";
 import { Devs } from "@utils/constants";
@@ -68,7 +68,9 @@ const messageContextMenuPatch: NavContextMenuPatchCallback = (
     const sticker = message.stickerItems.find(s => s.id === favoriteableId);
     if (!sticker?.format_type) return;
 
-    children.splice(-1, 0, buildMenuItem(sticker, false));
+    const idx = children.findIndex(c => Array.isArray(c) && findGroupChildrenByChildId("vc-copy-sticker-url", c) != null);
+
+    children.splice(idx, 0, buildMenuItem(sticker, idx !== -1));
 };
 
 const expressionPickerPatch: NavContextMenuPatchCallback = (children, props: { target: HTMLElement; }) => {

@@ -25,14 +25,16 @@ interface PluginCardProps extends React.HTMLProps<HTMLDivElement> {
     disabled?: boolean;
     onRestartNeeded(name: string, key: string): void;
     isNew?: boolean;
+    isUpdated?: boolean;
     onMouseEnter?: React.MouseEventHandler<HTMLDivElement>;
     onMouseLeave?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, onMouseLeave, isNew }: PluginCardProps) {
+export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, onMouseLeave, isNew, isUpdated }: PluginCardProps) {
     const settings = Settings.plugins[plugin.name];
     const pluginMeta = PluginMeta[plugin.name];
     const isEquicordPlugin = pluginMeta.folderName.startsWith("src/equicordplugins/") ?? false;
+    const isPatchcordPlugin = pluginMeta.folderName.startsWith("src/patchcordplugins/") ?? false;
     const isVencordPlugin = pluginMeta.folderName.startsWith("src/plugins/") ?? false;
     const isUserPlugin = pluginMeta?.userPlugin ?? false;
     const isModifiedPlugin = plugin.isModified ?? false;
@@ -89,6 +91,8 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         settings.enabled = !wasEnabled;
     }
 
+    const badgeText = isNew ? undefined : isUpdated ? "UPDATED" : undefined;
+
     const pluginInfo = [
         {
             condition: isModifiedPlugin,
@@ -101,6 +105,12 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             src: "https://equicord.org/assets/favicon.png",
             alt: "Equicord",
             title: "Equicord Plugin"
+        },
+        {
+            condition: isPatchcordPlugin,
+            src: "https://patchcord.itssolar.dev/user.png",
+            alt: "Patchcord",
+            title: "Patchcord Plugin"
         },
         {
             condition: isVencordPlugin,

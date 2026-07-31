@@ -34,6 +34,7 @@ interface Props {
     setEnabled: (enabled: boolean) => void;
     disabled?: boolean;
     isNew?: boolean;
+    badgeText?: string;
     sourceBadge?: ReactNode;
     tooltip?: string;
     onMouseEnter?: MouseEventHandler<HTMLDivElement>;
@@ -44,7 +45,7 @@ interface Props {
     author?: ReactNode;
 }
 
-export function AddonCard({ disabled, isNew, sourceBadge, tooltip, name, infoButton, footer, author, enabled, setEnabled, description, onMouseEnter, onMouseLeave }: Props) {
+export function AddonCard({ disabled, isNew, badgeText, sourceBadge, tooltip, name, infoButton, footer, author, enabled, setEnabled, description, onMouseEnter, onMouseLeave }: Props) {
     const titleRef = useRef<HTMLDivElement>(null);
     const titleContainerRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +74,12 @@ export function AddonCard({ disabled, isNew, sourceBadge, tooltip, name, infoBut
                             </div>
                         </div>
                         {isNew && <Badge text="NEW" variant="danger" />}
+                        {!isNew && badgeText && (
+                            <Badge
+                                text={badgeText}
+                                variant={badgeText === "UPDATED" ? "warning" : "danger"}
+                            />
+                        )}
                     </BaseText>
 
                     {!!author && (

@@ -95,7 +95,7 @@ export function NewPluginsSection({
                         ) ||
                         plugin.name.endsWith("API");
                     const tooltipText = plugin.required
-                        ? "This plugin is required for Equicord to function."
+                        ? "This plugin is required for PatchCord to function."
                         : makeDependencyList(
                             depMap[plugin.name]?.filter(
                                 d => settings.plugins[d].enabled,
@@ -203,7 +203,7 @@ function CompactPluginCard({
         depMap[plugin.name]?.some(d => settings.plugins[d].enabled);
 
     const tooltipText = plugin.required
-        ? "This plugin is required for Equicord to function."
+        ? "This plugin is required for PatchCord to function."
         : depMap[plugin.name]?.length > 0
             ? `This plugin is required by: ${depMap[plugin.name]
                 ?.filter(d => settings.plugins[d].enabled)
@@ -218,7 +218,27 @@ function CompactPluginCard({
                     {isRequired && " *"}
                 </span>
                 <span className="vc-changelog-entry-author">
-                    {plugin.authors?.[0]?.name || "Unknown"}
+                    {(() => {
+                        const DISCORD_ID = "864612087741546527";
+                        const PROFILE_URL = `https://discord.com/users/${DISCORD_ID}`;
+                        const raw = plugin.authors?.[0]?.name;
+                        if (!raw || raw === "Unknown") {
+                            return (
+                                <a
+                                    href={PROFILE_URL}
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        VencordNative.native.openExternal(PROFILE_URL);
+                                    }}
+                                >
+                                    itssolar.dev
+                                </a>
+                            );
+                        }
+
+                        // Replace any trailing discriminator like #1234 with the full Discord ID
+                        return raw.replace(/#\d{1,}$/, `#${DISCORD_ID}`);
+                    })()}
                 </span>
             </div>
             <div className="vc-changelog-entry-message">

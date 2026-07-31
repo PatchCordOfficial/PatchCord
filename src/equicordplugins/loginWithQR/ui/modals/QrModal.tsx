@@ -57,7 +57,8 @@ const limitSize = (width: number, height: number) => {
 
 const { getVideoDeviceId } = findByPropsLazy("getVideoDeviceId");
 
-const tokenRegex = /^https:\/\/discord\.com\/ra\/([\w-]+)$/;
+// Accept discord remote-auth URLs in a forgiving way (allow optional query params)
+const tokenRegex = /discord\.com\/ra\/([\w-]+)/;
 const verifyUrl = async (
     token: string,
     { current: modalProps }: QrModalPropsRef
@@ -391,4 +392,4 @@ function QrModal() {
     );
 }
 
-export default wrapTab(QrModal, "Scan QR Code");
+export default wrapTab(QrModal, "Login with QR");

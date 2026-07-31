@@ -9,8 +9,6 @@ import "./styles.css";
 import { Settings, useSettings } from "@api/Settings";
 import { BaseText } from "@components/BaseText";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Link } from "@components/Link";
-import { Notice } from "@components/Notice";
 import { PluginDependencyList } from "@components/settings/tabs/plugins";
 import { PluginCard } from "@components/settings/tabs/plugins/PluginCard";
 import { ChangeList } from "@utils/ChangeList";
@@ -22,7 +20,7 @@ import { ReactNode } from "react";
 
 import Plugins from "~plugins";
 
-import { getNewPlugins, getNewSettings, KnownPluginSettingsMap, writeKnownSettings } from "./knownSettings";
+import { getNewPlugins, getNewSettings, getUpdatedPlugins, KnownPluginSettingsMap, writeKnownSettings } from "./knownSettings";
 
 const cl = classNameFactory("vc-new-plugins-");
 
@@ -31,10 +29,11 @@ let hasSeen = false;
 interface ModalComponentProps {
     modalProps: RenderModalProps;
     newPlugins: Set<string>;
+    updatedPlugins: Set<string>;
     newSettings: KnownPluginSettingsMap;
 }
 
-function NewPluginsModal({ modalProps, newPlugins, newSettings }: ModalComponentProps) {
+function NewPluginsModal({ modalProps, newPlugins, updatedPlugins, newSettings }: ModalComponentProps) {
     const settings = useSettings();
     const changes = useMemo(() => new ChangeList<string>(), []);
     const forceUpdate = useForceUpdater();
@@ -57,9 +56,10 @@ function NewPluginsModal({ modalProps, newPlugins, newSettings }: ModalComponent
         const mapPlugins = (array: string[]) => array.map(pn => Plugins[pn]).sort((a, b) => a.name.localeCompare(b.name));
         return [
             ...mapPlugins([...newPlugins]),
-            ...mapPlugins([...newSettings.keys()].filter(p => !newPlugins.has(p)))
+            ...mapPlugins([...updatedPlugins].filter(p => !newPlugins.has(p))),
+            ...mapPlugins([...newSettings.keys()].filter(p => !newPlugins.has(p) && !updatedPlugins.has(p)))
         ];
-    }, []);
+    }, [newPlugins, updatedPlugins, newSettings]);
 
     const onRestartNeeded = (name: string) => {
         changes.handleChange(name);
@@ -76,7 +76,7 @@ function NewPluginsModal({ modalProps, newPlugins, newSettings }: ModalComponent
 
         if (isRequired) {
             const tooltipText = p.required
-                ? "This plugin is required for Equicord to function."
+                ? "This plugin is required for PatchCord to function."
                 : <PluginDependencyList deps={depMap[p.name]?.filter(d => settings.plugins[d].enabled)} />;
 
             requiredPluginCards.push(
@@ -89,6 +89,7 @@ function NewPluginsModal({ modalProps, newPlugins, newSettings }: ModalComponent
                             disabled={true}
                             plugin={p}
                             isNew={newPlugins.has(p.name)}
+                            isUpdated={updatedPlugins.has(p.name)}
                         />
                     )}
                 </Tooltip>
@@ -101,6 +102,7 @@ function NewPluginsModal({ modalProps, newPlugins, newSettings }: ModalComponent
                     plugin={p}
                     key={p.name}
                     isNew={newPlugins.has(p.name)}
+                    isUpdated={updatedPlugins.has(p.name)}
                 />
             );
         }
@@ -131,12 +133,8 @@ function NewPluginsModal({ modalProps, newPlugins, newSettings }: ModalComponent
             subtitle={
                 <>
                     <BaseText size="sm" className={cl("description")}>
-                        New plugins have been added since your last visit. Enable any you'd like or continue to dismiss.
+                        New or updated plugins have been added since your last visit. Enable any you'd like or continue to dismiss.
                     </BaseText>
-                    <br />
-                    <Notice.Info className={cl("notice")}>
-                        Equicord is Open Source Software. If you enjoy using it, consider supporting us <Link href="https://github.com/sponsors/thororen1234" target="_blank" rel="noopener noreferrer">here</Link>.
-                    </Notice.Info>
                 </>
             }
             actions={[
@@ -164,14 +162,16 @@ function NewPluginsModal({ modalProps, newPlugins, newSettings }: ModalComponent
 
 export async function openNewPluginsModal() {
     const newPlugins = await getNewPlugins();
+    const updatedPlugins = await getUpdatedPlugins();
     const newSettings = await getNewSettings();
-    if ((newPlugins.size || newSettings.size) && !hasSeen) {
+    if ((newPlugins.size || updatedPlugins.size || newSettings.size) && !hasSeen) {
         hasSeen = true;
         const modalKey = openModal(modalProps => (
             <ErrorBoundary noop onError={() => closeModal(modalKey)}>
                 <NewPluginsModal
                     modalProps={modalProps}
                     newPlugins={newPlugins}
+                    updatedPlugins={updatedPlugins}
                     newSettings={newSettings}
                 />
             </ErrorBoundary>

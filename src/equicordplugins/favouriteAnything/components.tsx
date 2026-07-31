@@ -45,7 +45,12 @@ function createPreviewMessage(attachment: MessageAttachment, channelId: string) 
 
 export const AttachmentPreview = proxyLazyWebpack(() => {
     // findComponentByCodeLazy doesn't work properly with component classes, this must be kept within the lazy scope
-    const MessageComponent = findComponentByCode("this.renderAttachments") as LazyComponentWrapper<MessageComponentClass>;
+    const MessageComponent = findComponentByCode("this.renderAttachments") as LazyComponentWrapper<MessageComponentClass> | null;
+    if (!MessageComponent) {
+        return function AttachmentPreview() {
+            return null;
+        };
+    }
 
     class MessageAttachmentsComponent extends MessageComponent {
         render(): ReactNode {
@@ -304,14 +309,14 @@ export function AttachmentContextProvider({ attachment, component, children }: A
             const raw: MessageAttachment =
                 "media" in originalItem
                     ? {
-                          ...originalItem.media,
-                          id: rest.uniqueId,
-                          size: 0,
-                          spoiler: rest.spoiler,
-                          filename: (rest.spoiler ? "SPOILER_" : "") + rest.uniqueId,
-                          content_type: originalItem.media.contentType,
-                          proxy_url: originalItem.media.proxyUrl
-                      }
+                        ...originalItem.media,
+                        id: rest.uniqueId,
+                        size: 0,
+                        spoiler: rest.spoiler,
+                        filename: (rest.spoiler ? "SPOILER_" : "") + rest.uniqueId,
+                        content_type: originalItem.media.contentType,
+                        proxy_url: originalItem.media.proxyUrl
+                    }
                     : originalItem;
 
             return { originalItem: raw, ...rest };

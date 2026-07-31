@@ -39,7 +39,7 @@ const messageContextMenuPatch: NavContextMenuPatchCallback = (
 
     const menuGroup = findGroupChildrenByChildId("delete", children);
     const deleteIndex = menuGroup?.findIndex(i => i?.props?.id === "delete");
-    if (deleteIndex == null || !menuGroup) return;
+    if (!deleteIndex || !menuGroup) return;
 
     menuGroup.splice(deleteIndex - 1, 0, (
         <Menu.MenuItem

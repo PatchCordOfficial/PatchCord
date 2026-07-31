@@ -68,7 +68,6 @@ export const VoiceRecorderWeb: VoiceRecorder = ({ setAudioBlob, onRecordingChang
             });
         } else {
             recorder?.stop();
-            recorder?.stream.getTracks().forEach(track => track.stop());
         }
     }
 

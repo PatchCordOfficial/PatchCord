@@ -24,7 +24,6 @@ import { join } from "path";
 
 import { DATA_DIR } from "./constants";
 import { crxToZip } from "./crxToZip";
-import { ensureSafePath } from "./ensureSafePath";
 import { fetchBuffer } from "./http";
 
 const extensionCacheDir = join(DATA_DIR, "ExtensionCache");
@@ -34,35 +33,24 @@ async function extract(data: Buffer, outDir: string) {
     return new Promise<void>((resolve, reject) => {
         unzip(data, (err, files) => {
             if (err) return void reject(err);
-
             Promise.all(Object.keys(files).map(async f => {
                 // Signature stuff
                 // 'Cannot load extension with file or directory name
                 // _metadata. Filenames starting with "_" are reserved for use by the system.';
                 if (f.startsWith("_metadata/")) return;
 
-                if (f.includes("\0")) throw new Error(`Invalid filename: "${f}"`);
-
-                if (f.endsWith("/")) {
-                    const dir = ensureSafePath(outDir, f);
-                    if (!dir) throw new Error(`Path traversal detected: "${f}"`);
-                    return void await mkdir(dir, { recursive: true });
-                }
+                if (f.endsWith("/")) return void mkdir(join(outDir, f), { recursive: true });
 
                 const pathElements = f.split("/");
-                const directories = pathElements.slice(0, -1).join("/");
-
-                const dir = ensureSafePath(outDir, directories);
-                if (!dir) throw new Error(`Path traversal detected: "${f}"`);
-
-                const filePath = ensureSafePath(outDir, f);
-                if (!filePath) throw new Error(`Path traversal detected: "${f}"`);
+                const name = pathElements.pop()!;
+                const directories = pathElements.join("/");
+                const dir = join(outDir, directories);
 
                 if (directories) {
                     await mkdir(dir, { recursive: true });
                 }
 
-                await writeFile(filePath, files[f]);
+                await writeFile(join(dir, name), files[f]);
             }))
                 .then(() => resolve())
                 .catch(err => {
@@ -74,7 +62,7 @@ async function extract(data: Buffer, outDir: string) {
 }
 
 export async function installExt(id: string) {
-    const extDir = join(extensionCacheDir, id);
+    const extDir = join(extensionCacheDir, `${id}`);
 
     try {
         await access(extDir, fsConstants.F_OK);
@@ -91,9 +79,6 @@ export async function installExt(id: string) {
             .catch(err => console.error(`Failed to extract extension ${id}`, err));
     }
 
-    if (session.defaultSession.extensions) {
-        session.defaultSession.extensions.loadExtension(extDir);
-    } else {
-        session.defaultSession.loadExtension(extDir);
-    }
+    // Electron 36 Deprecates session.defaultSession.loadExtension()
+    session.defaultSession.extensions ? session.defaultSession.extensions.loadExtension(extDir) : session.defaultSession.loadExtension(extDir);
 }

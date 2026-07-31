@@ -9,5 +9,4 @@ export { ApplicationCommandInputType, ApplicationCommandOptionType, ApplicationC
 
 export interface VencordCommand extends Command {
     isVencordCommand?: boolean;
-    rootCommand?: VencordCommand;
 }

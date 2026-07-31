@@ -13,9 +13,10 @@ import { getCurrentChannel, getCurrentGuild, getIntlMessage, openImageModal } fr
 import { isTruthy } from "@utils/guards";
 import { classes } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
-import { Guild, Role } from "@vencord/discord-types";
+import { Guild, PopoutProps, Role } from "@vencord/discord-types";
 import { findByCodeLazy, findByPropsLazy, findCssClassesLazy } from "@webpack";
-import { ContextMenuApi, GuildRoleStore, Menu, PermissionStore, Popout, RoleMemberPopout, useRef } from "@webpack/common";
+import { ContextMenuApi, GuildRoleStore, Menu, PermissionStore, Popout, useRef } from "@webpack/common";
+import { ComponentType } from "react";
 
 const GuildSettingsActions = findByPropsLazy("open", "selectRole", "updateGuild");
 const MenuItemClasses = findCssClassesLazy("item", "labelContainer", "colorDefault", "label", "iconContainer");
@@ -87,6 +88,16 @@ const settings = definePluginSettings({
         ]
     }
 });
+
+interface RoleMemberPopoutProps {
+    popoutProps: PopoutProps;
+    guildId: string;
+    channelId: string;
+    roleId: string;
+}
+type RoleMemberPopout = ComponentType<RoleMemberPopoutProps>;
+
+let RoleMemberPopout: RoleMemberPopout = () => null;
 
 export function buildExtraRoleContextMenuItems(role: Role, guild: Guild, popoutRef?: React.RefObject<any>) {
     if (!role) return { before: [], after: [] };
@@ -213,6 +224,13 @@ export default definePlugin({
     settings,
     openRoleContextMenu,
     patches: [
+        {
+            find: ".ROLE_MENTION)",
+            replacement: {
+                match: /function (\i)(?=.+?renderPopout:.{0,20}\1,\{guildId:\i,channelId:\i)/,
+                replace: "$self.RoleMembers=$1;$&"
+            }
+        },
         // Conflicts with RoleColorEverywhere which changes the code at the end of our match. (and also uses same find & similar match)
         // However, BetterRoleContext applies first (alphabetic order), so it's not an issue
         {
@@ -227,6 +245,10 @@ export default definePlugin({
     start() {
         // DeveloperMode needs to be enabled for the context menu to be shown
         DeveloperMode.updateSetting(true);
+    },
+
+    set RoleMembers(component: RoleMemberPopout) {
+        RoleMemberPopout = component;
     },
 
     contextMenus: {

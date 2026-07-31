@@ -202,7 +202,7 @@ export default definePlugin({
             predicate: () => getQuestifySettings().disableQuestsEverything,
             replacement: [
                 {
-                    match: /(?<="family-center"\)(?:&&undefined)?:null,)/,
+                    match: /(?<="family-center"\):null,)/,
                     replace: "null&&"
                 }
             ]
@@ -338,7 +338,7 @@ export default definePlugin({
             replacement: [
                 {
                     // Overwrite button props for UNENROLLED Quests.
-                    match: /(?<=onClick:\(\)=>{\i\?\.\(\),\i\(\)},text:\i,icon:\i,iconPosition:\i,fullWidth:!0)/,
+                    match: /(?<=onClick:\(\)=>{.[^}]+},text:\i,icon:\i,fullWidth:!0)/,
                     replace: ",...($self.getQuestButtonProps(arguments[0])??{})"
                 },
                 {
@@ -527,7 +527,7 @@ export default definePlugin({
             replacement: [
                 {
                     // Extracts the custom maxDigits prop.
-                    match: /(\(\i\){let{count:\i,)/,
+                    match: /(=>{let{count:\i,)/,
                     replace: "$1maxDigits,"
                 },
                 {

@@ -106,7 +106,7 @@
     margin-left: 100px;
 }
 
-[data-tab-id="Scan QR Code"]::before {
+[data-tab-id="Login with QR"]::before {
     /* stylelint-disable-next-line property-no-vendor-prefix */
     -webkit-mask: var(--si-scan-qr-code) center/contain no-repeat !important;
     mask: var(--si-scan-qr-code) center/contain no-repeat !important;

@@ -4,28 +4,61 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { RepoGroup, RepoSortMode } from "@equicordplugins/githubRepos/types";
-import { PERSONAL_GROUP_KEY, sortGroups } from "@equicordplugins/githubRepos/utils";
+import { getLanguageColor } from "@equicordplugins/githubRepos/colors";
+import { GitHubRepo } from "@equicordplugins/githubRepos/types";
 import { RenderModalProps } from "@vencord/discord-types";
-import { Modal, React, useState } from "@webpack/common";
+import { Modal, React } from "@webpack/common";
 
-import { cl, settings } from "..";
-import { RepoCard } from "./RepoCard";
-import { RepoSubTabs } from "./RepoSubTabs";
+import { cl } from "..";
+import { Star } from "./Star";
 
 interface ReposModalProps {
-    groups: RepoGroup[];
-    initialActiveKey: string;
+    repos: GitHubRepo[];
     username: string;
     rootProps: any;
 }
 
-export function ReposModal({ groups, initialActiveKey, username, rootProps }: ReposModalProps & { rootProps: RenderModalProps; }) {
-    const [activeKey, setActiveKey] = useState(initialActiveKey);
-    const [sortMode, setSortMode] = useState<RepoSortMode>("count");
+export function ReposModal({ repos, username, rootProps }: ReposModalProps & { rootProps: RenderModalProps; }) {
+    const renderTableHeader = () => (
+        <thead>
+            <tr>
+                <th>Repository</th>
+                <th>Description</th>
+                <th>Language</th>
+                <th>Stars</th>
+            </tr>
+        </thead>
+    );
 
-    const sortedGroups = sortGroups(groups, sortMode);
-    const activeGroup = sortedGroups.find(g => g.key === activeKey) ?? sortedGroups[0];
+    const renderTableRow = (repo: GitHubRepo) => (
+        <tr key={repo.id} onClick={() => window.open(repo.html_url, "_blank")}>
+            <td>
+                <div className={cl("table-name")}>{repo.name}</div>
+            </td>
+            <td>
+                <div className={cl("table-description")}>
+                    {repo.description || ""}
+                </div>
+            </td>
+            <td>
+                {repo.language && (
+                    <div className={cl("table-language")}>
+                        <span
+                            className={cl("table-language-color")}
+                            style={{ backgroundColor: getLanguageColor(repo.language) }}
+                        />
+                        <span>{repo.language}</span>
+                    </div>
+                )}
+            </td>
+            <td>
+                <div className={cl("table-stars")}>
+                    <Star className={cl("star-icon")} />
+                    <span>{repo.stargazers_count.toLocaleString()}</span>
+                </div>
+            </td>
+        </tr>
+    );
 
     return (
         <Modal
@@ -46,25 +79,19 @@ export function ReposModal({ groups, initialActiveKey, username, rootProps }: Re
                 }
             ]}
         >
-            <div className={cl("modal-content")}>
-                <RepoSubTabs
-                    groups={sortedGroups}
-                    activeKey={activeGroup?.key ?? PERSONAL_GROUP_KEY}
-                    onSelect={setActiveKey}
-                    sortMode={sortMode}
-                    onToggleSort={() => setSortMode(mode => mode === "count" ? "alpha" : "count")}
-                    canSort={sortedGroups.length > 2}
-                />
-                <div className={cl("list", "modal-list")}>
-                    {activeGroup?.repos.map(repo => (
-                        <RepoCard
-                            key={repo.id}
-                            repo={repo}
-                            showStars={settings.store.showStars}
-                            showLanguage={settings.store.showLanguage}
-                        />
-                    ))}
-                </div>
+            <div className={cl("table-container")}>
+                <table className={cl("table")}>
+                    <colgroup>
+                        <col className={cl("header-repo")} />
+                        <col className={cl("header-description")} />
+                        <col className={cl("header-language")} />
+                        <col className={cl("header-stars")} />
+                    </colgroup>
+                    {renderTableHeader()}
+                    <tbody>
+                        {repos.map(renderTableRow)}
+                    </tbody>
+                </table>
             </div>
         </Modal>
     );

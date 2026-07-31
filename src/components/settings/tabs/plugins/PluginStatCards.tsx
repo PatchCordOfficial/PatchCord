@@ -8,6 +8,7 @@ import "./styles.css";
 
 import { BaseText } from "@components/BaseText";
 import { Tooltip } from "@webpack/common";
+import PatchCordIcon, { PC_ICON_DATA_URL } from "@components/Icons/PatchCordIcon";
 
 export function StockPluginsCard({ totalStockPlugins, enabledStockPlugins }) {
     return (
@@ -37,7 +38,7 @@ export function UserPluginsCard({ totalUserPlugins, enabledUserPlugins }) {
                         <Tooltip
                             text={
                                 <img
-                                    src="https://discord.com/assets/ab6835d2922224154ddf.svg"
+                                    src={PC_ICON_DATA_URL}
                                     style={{ width: "40px", height: "40px" }}
                                 />
                             }

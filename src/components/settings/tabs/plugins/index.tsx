@@ -26,8 +26,9 @@ import { Card } from "@components/Card";
 import { Divider } from "@components/Divider";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadingTertiary } from "@components/Heading";
+import { RestartIcon } from "@components/Icons";
 import { Paragraph } from "@components/Paragraph";
-import { SettingsTab } from "@components/settings";
+import { QuickAction, QuickActionCard, SettingsTab } from "@components/settings";
 import { debounce } from "@shared/debounce";
 import { ChangeList } from "@utils/ChangeList";
 import { classNameFactory } from "@utils/css";
@@ -61,7 +62,7 @@ function showErrorToast(message: string) {
     });
 }
 
-function ReloadRequiredCard({ required, enabledPlugins, openWarningModal, resetCheckAndDo }) {
+function ReloadRequiredCard({ required, enabledPlugins, openWarningModal, resetCheckAndDo, onRefresh }) {
     return (
         <Card className={classes(cl("info-card"), required && "vc-warning-card")}>
             {required ? (
@@ -73,12 +74,18 @@ function ReloadRequiredCard({ required, enabledPlugins, openWarningModal, resetC
                     <Button variant="primary" className={cl("restart-button")} onClick={() => location.reload()}>
                         Restart
                     </Button>
+                    <Button variant="secondary" size="small" className={cl("restart-button")} onClick={onRefresh}>
+                        Refresh
+                    </Button>
                 </>
             ) : (
                 <>
                     <HeadingTertiary>Plugin Management</HeadingTertiary>
                     <Paragraph>Press the cog wheel or info icon to get more info on a plugin</Paragraph>
                     <Paragraph>Plugins with a cog wheel have settings you can modify!</Paragraph>
+                    <Button variant="secondary" size="small" className={cl("restart-button")} onClick={onRefresh}>
+                        Refresh
+                    </Button>
                 </>
             )}
             {enabledPlugins.length > 0 && !required && (
@@ -99,10 +106,10 @@ function ReloadRequiredCard({ required, enabledPlugins, openWarningModal, resetC
 
 const enum SearchStatus {
     ALL,
-    FAVORITES,
     ENABLED,
     DISABLED,
     EQUICORD,
+    PATCHCORD,
     VENCORD,
     NEW,
     USER_PLUGINS,
@@ -171,10 +178,10 @@ export default function PluginSettings() {
                         <p>The following plugins require a restart:</p>
                         <div>
                             {displayed.map((s, i) => (
-                                <React.Fragment key={i}>
+                                <span key={i}>
                                     {i > 0 && ", "}
                                     {Parser.parse("`" + s + "`")}
-                                </React.Fragment>
+                                </span>
                             ))}
                             {remainingCount > 0 && <span> and {remainingCount} more</span>}
                         </div>
@@ -198,13 +205,23 @@ export default function PluginSettings() {
         return o;
     }, []);
 
-    const sortedPlugins = useMemo(() =>
-        Object.values(Plugins).sort((a, b) => a.name.localeCompare(b.name)),
-        []
-    )
-        .toSorted((a, b) => Number(settings.plugins[b.name]?.isFavorite ?? false) - Number(settings.plugins[a.name]?.isFavorite ?? false));
+    const pluginKeys = Object.keys(Plugins);
+    const pluginMetaVersion = Object.values(PluginMeta)
+        .map(meta => `${meta.folderName}:${String(meta.userPlugin)}`)
+        .join(",");
 
-    const hasUserPlugins = useMemo(() => !IS_STANDALONE && Object.values(PluginMeta).some(m => m.userPlugin), []);
+    const sortedPlugins = useMemo(
+        () => Object.values(Plugins).sort((a, b) => a.name.localeCompare(b.name)),
+        [pluginKeys.join(",")]
+    );
+
+    const isUserPlugin = (pluginName: string) => {
+        const meta = PluginMeta[pluginName];
+        if (!meta) return false;
+        return meta.userPlugin || meta.folderName.startsWith("src/patchcordplugins/");
+    };
+
+    const hasUserPlugins = !IS_STANDALONE && pluginKeys.some(isUserPlugin);
 
     const [searchValue, setSearchValue] = useState({ value: "", tags: [] as PluginTag[], status: SearchStatus.ALL });
 
@@ -215,9 +232,6 @@ export default function PluginSettings() {
         const { status, tags } = searchValue;
 
         switch (status) {
-            case SearchStatus.FAVORITES:
-                if (!settings.plugins[plugin.name]?.isFavorite) return false;
-                break;
             case SearchStatus.DISABLED:
                 if (isPluginEnabled(plugin.name)) return false;
                 break;
@@ -227,6 +241,9 @@ export default function PluginSettings() {
             case SearchStatus.EQUICORD:
                 if (!PluginMeta[plugin.name].folderName.startsWith("src/equicordplugins/")) return false;
                 break;
+            case SearchStatus.PATCHCORD:
+                if (!PluginMeta[plugin.name].folderName.startsWith("src/patchcordplugins/")) return false;
+                break;
             case SearchStatus.VENCORD:
                 if (!PluginMeta[plugin.name].folderName.startsWith("src/plugins/")) return false;
                 break;
@@ -234,7 +251,7 @@ export default function PluginSettings() {
                 if (!newPluginsSet?.has(plugin.name)) return false;
                 break;
             case SearchStatus.USER_PLUGINS:
-                if (!PluginMeta[plugin.name]?.userPlugin) return false;
+                if (!isUserPlugin(plugin.name)) return false;
                 break;
             case SearchStatus.API_PLUGINS:
                 if (!plugin.name.endsWith("API")) return false;
@@ -271,6 +288,9 @@ export default function PluginSettings() {
     }));
 
     const handleRestartNeeded = useCallback((name: string, key: string) => changes.handleChange(`${name}:${key}`), [changes]);
+    const handleRefreshPlugins = useCallback(() => {
+        location.reload();
+    }, []);
 
     const { plugins, requiredPlugins } = useMemo(() => {
         const plugins = [] as JSX.Element[];
@@ -287,7 +307,7 @@ export default function PluginSettings() {
 
             if (isRequired) {
                 const tooltipText = p.required || !depMap[p.name]
-                    ? "This plugin is required for Equicord to function."
+                    ? "This plugin is required for PatchCord to function."
                     : <PluginDependencyList deps={depMap[p.name]?.filter(d => settings.plugins[d].enabled)} />;
 
                 requiredPlugins.push(
@@ -365,12 +385,12 @@ export default function PluginSettings() {
         const totalPlugins = Object.keys(Plugins).filter(p => !isApiPlugin(p));
         const enabledPlugins = Object.keys(Plugins).filter(p => isPluginEnabled(p) && !isApiPlugin(p));
 
-        const totalStockPlugins = totalPlugins.filter(p => !PluginMeta[p].userPlugin && !Plugins[p].hidden).length;
-        const totalUserPlugins = totalPlugins.filter(p => PluginMeta[p].userPlugin).length;
-        const enabledStockPlugins = enabledPlugins.filter(p => !PluginMeta[p].userPlugin).length;
-        const enabledUserPlugins = enabledPlugins.filter(p => PluginMeta[p].userPlugin).length;
+        const totalStockPlugins = totalPlugins.filter(p => !isUserPlugin(p) && !Plugins[p].hidden).length;
+        const totalUserPlugins = totalPlugins.filter(p => isUserPlugin(p)).length;
+        const enabledStockPlugins = enabledPlugins.filter(p => !isUserPlugin(p)).length;
+        const enabledUserPlugins = enabledPlugins.filter(p => isUserPlugin(p)).length;
         return { totalStockPlugins, totalUserPlugins, enabledStockPlugins, enabledUserPlugins, enabledPlugins };
-    }, [settings.plugins]);
+    }, [settings.plugins, pluginKeys.join(","), pluginMetaVersion]);
     const pluginsToLoad = Math.min(36, plugins.length);
     const [visibleCount, setVisibleCount] = React.useState(pluginsToLoad);
     const loadMore = React.useCallback(() => {
@@ -390,7 +410,13 @@ export default function PluginSettings() {
 
     return (
         <SettingsTab>
-            <ReloadRequiredCard required={changes.hasChanges} enabledPlugins={enabledPlugins} openWarningModal={openWarningModal} resetCheckAndDo={resetCheckAndDo} />
+            <ReloadRequiredCard
+                required={changes.hasChanges}
+                enabledPlugins={enabledPlugins}
+                openWarningModal={openWarningModal}
+                resetCheckAndDo={resetCheckAndDo}
+                onRefresh={handleRefreshPlugins}
+            />
 
             <div className={cl("stats-container")}>
                 <StockPluginsCard
@@ -402,6 +428,14 @@ export default function PluginSettings() {
                     enabledUserPlugins={enabledUserPlugins}
                 />
             </div>
+
+            <QuickActionCard>
+                <QuickAction
+                    text="Refresh Plugins"
+                    action={handleRefreshPlugins}
+                    Icon={RestartIcon}
+                />
+            </QuickActionCard>
 
             <div className={cl("ui-elements")}>
                 <UIElementsButton />
@@ -426,10 +460,10 @@ export default function PluginSettings() {
                     <Select
                         options={[
                             { label: "Show All", value: SearchStatus.ALL, default: true },
-                            { label: "Show Favorites", value: SearchStatus.FAVORITES },
                             { label: "Show Enabled", value: SearchStatus.ENABLED },
                             { label: "Show Disabled", value: SearchStatus.DISABLED },
                             { label: "Show Equicord", value: SearchStatus.EQUICORD },
+                            { label: "Show Patchcord", value: SearchStatus.PATCHCORD },
                             { label: "Show Vencord", value: SearchStatus.VENCORD },
                             { label: "Show New", value: SearchStatus.NEW },
                             hasUserPlugins && { label: "Show UserPlugins", value: SearchStatus.USER_PLUGINS },

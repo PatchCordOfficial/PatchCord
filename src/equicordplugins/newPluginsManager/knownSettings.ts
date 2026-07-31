@@ -6,12 +6,13 @@
 
 import { DataStore } from "@api/index";
 
-import plugins from "~plugins";
+import plugins, { PluginMeta } from "~plugins";
 
 export type KnownPluginSettingsMap = Map<string, Set<string>>;
 
 export const KNOWN_PLUGINS_LEGACY_DATA_KEY = "NewPluginsManager_KnownPlugins";
 export const KNOWN_SETTINGS_DATA_KEY = "NewPluginsManager_KnownSettings";
+export const KNOWN_PLUGIN_HASHES_DATA_KEY = "NewPluginsManager_KnownPluginHashes";
 
 function getSettingsSetForPlugin(plugin: string): Set<string> {
     const settings = plugins[plugin]?.settings?.def || {};
@@ -23,6 +24,50 @@ function getCurrentSettings(pluginList: string[]): KnownPluginSettingsMap {
         name,
         getSettingsSetForPlugin(name)
     ]));
+}
+
+function getCurrentPluginHashes(pluginList: string[]): Map<string, string> {
+    const map = new Map<string, string>();
+    for (const name of pluginList) {
+        const hash = PluginMeta[name]?.hash;
+        if (typeof hash === "string") {
+            map.set(name, hash);
+        }
+    }
+    return map;
+}
+
+async function persistKnownPluginHashes(map: Map<string, string>): Promise<void> {
+    await DataStore.set(KNOWN_PLUGIN_HASHES_DATA_KEY, Object.fromEntries(map));
+}
+
+async function getKnownPluginHashes(): Promise<Map<string, string>> {
+    const raw = await DataStore.get(KNOWN_PLUGIN_HASHES_DATA_KEY);
+    if (raw === undefined) {
+        const initial = getCurrentPluginHashes(Object.keys(plugins));
+        await persistKnownPluginHashes(initial);
+        return initial;
+    }
+
+    const map = new Map<string, string>();
+    if (raw instanceof Map) {
+        raw.forEach((value, key) => map.set(String(key), String(value)));
+    } else if (Array.isArray(raw)) {
+        for (const entry of raw as [unknown, unknown][]) {
+            if (!Array.isArray(entry) || entry.length < 2) continue;
+            map.set(String(entry[0]), String(entry[1]));
+        }
+    } else if (raw && typeof raw === "object") {
+        Object.entries(raw).forEach(([key, value]) => {
+            map.set(key, String(value));
+        });
+    }
+    return map;
+}
+
+export async function updateKnownPluginHashes(): Promise<void> {
+    const currentHashes = getCurrentPluginHashes(Object.keys(plugins));
+    await persistKnownPluginHashes(currentHashes);
 }
 
 export async function getKnownSettings(): Promise<Map<string, Set<string>>> {
@@ -67,6 +112,21 @@ export async function getNewPlugins(): Promise<Set<string>> {
     return new Set(currentPlugins.filter(p => !knownPlugins.has(p)));
 }
 
+export async function getUpdatedPlugins(): Promise<Set<string>> {
+    const currentHashes = getCurrentPluginHashes(Object.keys(plugins));
+    const knownHashes = await getKnownPluginHashes();
+    const updatedPlugins = new Set<string>();
+
+    currentHashes.forEach((hash, plugin) => {
+        if (!knownHashes.has(plugin)) return;
+        if (knownHashes.get(plugin) === hash) return;
+        if (plugins[plugin]?.hidden || plugins[plugin]?.required) return;
+        updatedPlugins.add(plugin);
+    });
+
+    return updatedPlugins;
+}
+
 export async function writeKnownSettings() {
     const currentSettings = getCurrentSettings(Object.keys(plugins));
     const knownSettings = await getKnownSettings();
@@ -78,6 +138,7 @@ export async function writeKnownSettings() {
         ]));
     });
     await DataStore.set(KNOWN_SETTINGS_DATA_KEY, allSettings);
+    await updateKnownPluginHashes();
 }
 
 export async function debugWipeSomeData() {

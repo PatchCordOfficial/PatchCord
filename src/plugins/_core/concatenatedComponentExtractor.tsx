@@ -6,7 +6,7 @@
 
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
-import { setColorPicker, setCreateScroller, setNewCustomizationSection, setRoleMemberPopout } from "@webpack/common";
+import { setColorPicker, setCreateScroller, setNewCustomizationSection } from "@webpack/common";
 
 export default definePlugin({
     name: "ConcatenatedComponentExtractor",
@@ -38,18 +38,10 @@ export default definePlugin({
                     replace: "$&$self.setNewCustomizationSection($1);"
                 }
             ]
-        },
-        {
-            find: ".ROLE_MENTION)",
-            replacement: {
-                match: /function (\i)(?=.+?renderPopout:.{0,20}\1,\{guildId:\i,channelId:\i)/,
-                replace: "$self.setRoleMemberPopout($1);$&"
-            }
-        },
+        }
     ],
 
     setCreateScroller,
     setColorPicker,
-    setNewCustomizationSection,
-    setRoleMemberPopout,
+    setNewCustomizationSection
 });

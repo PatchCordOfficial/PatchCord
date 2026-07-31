@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { definePluginSettings } from "@api/Settings";
+import { definePluginSettings, migratePluginSettings } from "@api/Settings";
 import { getUserSettingLazy } from "@api/UserSettings";
 import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
-import { UserSettingsProtoStore } from "@webpack/common";
 
 let savedStatus: string | null;
 
@@ -37,58 +36,36 @@ const settings = definePluginSettings({
                 value: "invisible",
             }
         ]
-    }
+    },
+    excludeInvisible: {
+        type: OptionType.BOOLEAN,
+        description: "Prevent automatic status changes while your status is set to invisible",
+        default: false
+    },
 });
 
-let lastStatus: string | null = null;
-
-function handleUserSettingsChange() {
-    const status = StatusSettings.getSetting();
-    if (status !== lastStatus) {
-        lastStatus = status;
-
-        savedStatus = null;
-    }
-}
-
-async function setStatus(status: string) {
-    lastStatus = status;
-    await StatusSettings.updateSetting(status);
-}
-
+migratePluginSettings("AutoDNDWhilePlaying", "StatusWhilePlaying");
 export default definePlugin({
     name: "AutoDNDWhilePlaying",
     description: "Automatically updates your online status (online, idle, dnd) when launching games",
     tags: ["Activity", "Utility"],
     authors: [Devs.thororen],
+    isModified: true,
     settings,
-
     flux: {
-        async RUNNING_GAMES_CHANGE({ games }) {
+        RUNNING_GAMES_CHANGE({ games }) {
             const status = StatusSettings.getSetting();
 
-            if (games.length > 0) {
-                if (status !== settings.store.statusToSet && status !== "invisible") {
-                    savedStatus = status;
-                    await setStatus(settings.store.statusToSet);
-                }
-            } else if (savedStatus) {
-                const toRestore = savedStatus;
-                savedStatus = null;
+            if (settings.store.excludeInvisible && (savedStatus ?? status) === "invisible") return;
 
-                if (status !== toRestore) {
-                    await setStatus(toRestore);
+            if (games.length > 0) {
+                if (status !== settings.store.statusToSet) {
+                    savedStatus = status;
+                    StatusSettings.updateSetting(settings.store.statusToSet);
                 }
+            } else if (savedStatus && savedStatus !== settings.store.statusToSet) {
+                StatusSettings.updateSetting(savedStatus);
             }
         }
-    },
-
-    start() {
-        lastStatus = StatusSettings.getSetting();
-        UserSettingsProtoStore.addChangeListener(handleUserSettingsChange);
-    },
-
-    stop() {
-        UserSettingsProtoStore.removeChangeListener(handleUserSettingsChange);
     }
 });

@@ -1,0 +1,297 @@
+.vc-share-root {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ─── Guide Banner ─── */
+.vc-share-guide {
+    display: flex;
+    align-items: center;
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--border-subtle, var(--background-tertiary));
+    border-radius: 12px;
+    padding: 16px;
+    gap: 16px;
+    margin-bottom: 8px;
+}
+
+.vc-share-guide-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--brand-experiment, #5865f2);
+    color: white;
+}
+
+.vc-share-guide-content h3 {
+    margin: 0 0 8px 0;
+    color: var(--header-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.vc-share-guide-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-share-guide-step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-normal);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.vc-share-step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--background-modifier-selected);
+    color: var(--text-normal);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.vc-share-guide-step code {
+    background: var(--background-modifier-hover);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: var(--font-code, monospace);
+    font-size: 12px;
+}
+
+.vc-share-guide-step b {
+    color: var(--text-normal);
+    font-weight: 600;
+}
+
+/* ─── Two Column Layout ─── */
+.vc-share-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 800px) {
+    .vc-share-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─── Cards ─── */
+.vc-share-card {
+    background: var(--background-secondary);
+    border: 1px solid var(--border-subtle, var(--background-tertiary));
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.vc-share-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-subtle, var(--background-tertiary));
+    background: var(--background-tertiary);
+}
+
+.vc-share-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+.vc-share-card-header h2 {
+    margin: 0 0 4px 0;
+    color: var(--header-primary);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.vc-share-card-header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.vc-share-card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.vc-share-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-grow: 1;
+}
+
+/* ─── Picker & Checklist ─── */
+.vc-share-picker-box {
+    background: var(--background-tertiary);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid var(--border-subtle);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.vc-share-picker-box h4 {
+    margin: 0 0 12px 0;
+    color: var(--header-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.vc-share-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-share-checklist-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 14px;
+    text-align: center;
+    padding: 10px;
+}
+
+.vc-share-switch-padded {
+    background: var(--background-primary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.vc-share-switch-compact {
+    margin: 0 !important;
+}
+
+.vc-share-switch-compact > div {
+    padding: 4px 8px !important;
+    border-radius: 6px;
+}
+
+.vc-share-switch-compact > div:hover {
+    background: var(--background-modifier-hover);
+}
+
+/* ─── TextAreas & Actions ─── */
+.vc-share-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--input-background, var(--background-primary));
+    border: 1px solid var(--input-border-default, var(--border-subtle));
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: var(--font-code, monospace);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-normal);
+    resize: vertical;
+    min-height: 72px;
+    transition: border-color 0.15s ease-out;
+}
+
+.vc-share-textarea:focus {
+    outline: none;
+    border-color: var(--brand-experiment, #5865f2);
+}
+
+.vc-share-textarea[readonly] {
+    cursor: text;
+    background: var(--background-secondary-alt);
+    color: var(--text-muted);
+}
+
+.vc-share-action-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.vc-share-result-box {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--background-primary);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+}
+
+/* ─── Import Specific ─── */
+.vc-share-import-preview {
+    margin-top: 16px;
+    background: var(--background-primary);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px dashed var(--border-subtle);
+}
+
+.vc-share-import-preview h4 {
+    margin: 0 0 4px 0;
+    color: var(--header-primary);
+    font-size: 15px;
+}
+
+.vc-share-import-preview p {
+    margin: 0 0 12px 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.vc-share-result-summary {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vc-share-result-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--background-secondary-alt);
+}
+
+.vc-share-result-item.success { color: var(--text-positive); }
+.vc-share-result-item.warning { color: var(--text-danger); }
+.vc-share-result-item.info { color: var(--text-normal); }
+
+.vc-share-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    display: inline-block;
+}
+
+/* ─── Helpers ─── */
+.vc-share-mt-8 { margin-top: 8px; }
+.vc-share-mt-12 { margin-top: 12px; }
+.vc-share-mt-16 { margin-top: 16px; }

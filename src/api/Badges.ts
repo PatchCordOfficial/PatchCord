@@ -17,7 +17,7 @@
 */
 
 import ErrorBoundary from "@components/ErrorBoundary";
-import globalBadges from "@equicordplugins/globalBadges";
+import globalBadges from "@patchcordplugins/globalBadges";
 import BadgeAPIPlugin from "@plugins/_api/badges";
 import { ComponentType, HTMLProps } from "react";
 
@@ -43,7 +43,7 @@ export interface ProfileBadge {
     /** Action to perform when you click the badge */
     onClick?(event: React.MouseEvent, props: ProfileBadge & BadgeUserArgs): void;
     /** Action to perform when you right click the badge */
-    onContextMenu?(event: React.MouseEvent, props: ProfileBadge & BadgeUserArgs): void;
+    onContextMenu?(event: React.MouseEvent, props: BadgeUserArgs & BadgeUserArgs): void;
     /** Should the user display this badge? */
     shouldShow?(userInfo: BadgeUserArgs): boolean;
     /** Optional props (e.g. style) for the badge, ignored for component badges */
@@ -109,32 +109,34 @@ export function _getBadges(args: BadgeUserArgs) {
     const equicordDonorBadges = BadgeAPIPlugin.getEquicordDonorBadges(args.userId);
     const GlobalBadges = isPluginEnabled(globalBadges.name) ? globalBadges.getGlobalBadges(args.userId) : false;
 
-    // do globalbadges first so it shows before the contrib badges but after donor badges
-    if (GlobalBadges) {
-        badges.unshift(
-            ...GlobalBadges.map(badge => ({
-                ...args,
-                ...badge,
-            }))
-        );
+    // These three lists are all sourced from JSON badge feeds, and it's
+    // possible (e.g. if GlobalBadges' configurable API URL happens to point
+    // at the same badges.json PatchCord's donor feed already hardcodes) for
+    // the exact same badge to show up in more than one of them. Without
+    // deduping here, that badge would render twice on the user's real
+    // profile even though it only appears once in the Custom Badges tab
+    // (which only ever reads from GlobalBadges' own list). We keep the
+    // first occurrence in equicordDonorBadges -> donorBadges -> GlobalBadges
+    // order, which matches the visual order these were already unshifted in.
+    const seenIcons = new Set<string>();
+    const extraBadges: ProfileBadge[] = [];
+    for (const list of [equicordDonorBadges, donorBadges, GlobalBadges]) {
+        if (!list) continue;
+        for (const badge of list) {
+            const dedupeKey = badge.iconSrc ?? badge.description;
+            if (dedupeKey) {
+                if (seenIcons.has(dedupeKey)) continue;
+                seenIcons.add(dedupeKey);
+            }
+            extraBadges.push({ ...args, ...badge });
+        }
     }
 
-    if (donorBadges) {
-        badges.unshift(
-            ...donorBadges.map(badge => ({
-                ...args,
-                ...badge,
-            }))
-        );
-    }
-
-    if (equicordDonorBadges) {
-        badges.unshift(
-            ...equicordDonorBadges.map(badge => ({
-                ...args,
-                ...badge,
-            }))
-        );
+    // do globalbadges/donor/equicord-donor first so they show before the
+    // contrib badges, in equicordDonorBadges -> donorBadges -> GlobalBadges
+    // order (unshifting the whole deduped list keeps that same order).
+    if (extraBadges.length) {
+        badges.unshift(...extraBadges);
     }
 
     return badges;

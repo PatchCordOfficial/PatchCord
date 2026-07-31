@@ -28,19 +28,14 @@ const settings = definePluginSettings({
 
 function setCss() {
     style.textContent = `
-        .vc-nsfw-img [class*=imageContainer] img,
-        .vc-nsfw-img [class*=imageContainer] video,
-        .vc-nsfw-img [class*=wrapperPaused] img,
-        .vc-nsfw-img [class*=wrapperPaused] video {
+        .vc-nsfw-img [class*=imageContainer],
+        .vc-nsfw-img [class*=wrapperPaused] {
             filter: blur(${settings.store.blurAmount}px);
             transition: filter 0.2s;
-        }
 
-        .vc-nsfw-img [class*=imageContainer]:hover img,
-        .vc-nsfw-img [class*=imageContainer]:hover video,
-        .vc-nsfw-img [class*=wrapperPaused]:hover img,
-        .vc-nsfw-img [class*=wrapperPaused]:hover video {
-            filter: blur(0);
+            &:hover {
+                filter: blur(0);
+            }
         }
         `;
 }

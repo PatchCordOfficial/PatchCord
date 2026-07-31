@@ -18,7 +18,7 @@
 
 import "./styles.css";
 
-import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, registerCommand, sendBotMessage, unregisterCommand } from "@api/Commands";
+import { ApplicationCommandInputType, ApplicationCommandOptionType, findOption, registerCommand, sendBotMessage } from "@api/Commands";
 import { migratePluginSettings } from "@api/Settings";
 import { Devs } from "@utils/constants";
 import { sendMessage } from "@utils/discord";
@@ -96,12 +96,11 @@ export default definePlugin({
     tags: ["Commands", "Customisation", "Utility"],
     settings,
 
-    start() {
-        getTags().forEach(registerTagCommand);
-    },
-
-    stop() {
-        getTags().forEach(tag => unregisterCommand(tag.name));
+    async start() {
+        const tags = getTags();
+        for (const tagName in tags) {
+            registerTagCommand(tags[tagName]);
+        }
     },
 
     commands: [
@@ -161,7 +160,7 @@ export default definePlugin({
                     }
 
                     case "list": {
-                        const content = getTags()
+                        const content = Object.values(getTags())
                             .map(tag => `\`${tag.name}\`: ${tag.message.slice(0, 72).replaceAll("\\n", " ")}${tag.message.length > 72 ? "..." : ""}`)
                             .join("\n");
 

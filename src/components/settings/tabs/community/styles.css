@@ -1,0 +1,71 @@
+.vc-community-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+}
+
+.vc-community-user-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85em;
+    padding: 0.6em 0.85em;
+}
+
+.vc-community-avatar,
+.vc-community-avatar-fallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.vc-community-avatar-fallback {
+    background: var(--background-tertiary, #232428);
+}
+
+.vc-community-user-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.vc-community-username {
+    font-weight: 600;
+    font-size: 0.95em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vc-community-userid {
+    font-size: 0.75em;
+    opacity: 0.6;
+}
+
+.vc-community-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--status-online, #23a55a);
+    flex-shrink: 0;
+}
+
+.vc-community-empty {
+    opacity: 0.6;
+    padding: 1em 0;
+}
+
+.vc-community-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    margin-top: 1em;
+}
+
+.vc-community-page-label {
+    font-size: 0.85em;
+    opacity: 0.75;
+}

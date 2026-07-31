@@ -21,18 +21,18 @@ import openQrModal from "./ui/modals/QrModal";
 const settings = definePluginSettings({
     scanQr: {
         type: OptionType.COMPONENT,
-        description: "Scan a QR code",
+        description: "Login to another device using a QR code.",
         component() {
             if (!plugins.LoginWithQR.started)
                 return (
                     <Paragraph>
-                        Enable the plugin and restart your client to scan a login QR code
+                        Enable the plugin and restart your client to login with a QR code
                     </Paragraph>
                 );
 
             return (
                 <Button size={Button.Sizes.SMALL} onClick={openQrModal}>
-                    {getIntlMessage("USER_SETTINGS_SCAN_QR_CODE")}
+                    Login with QR
                 </Button>
             );
         },
@@ -63,7 +63,7 @@ export default definePlugin({
     start() {
         SettingsPlugin.customEntries.push({
             key: "equicord_login_with_qr",
-            title: getIntlMessage("USER_SETTINGS_SCAN_QR_CODE"),
+            title: "Login with QR",
             Component: openQrModal,
             Icon: QrCodeIcon
         });

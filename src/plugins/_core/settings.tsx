@@ -5,13 +5,17 @@
  */
 
 import { definePluginSettings } from "@api/Settings";
-import { BackupRestoreIcon, CloudIcon, LogIcon, MainSettingsIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, UpdaterIcon } from "@components/Icons";
+import { BackupRestoreIcon, CloudIcon, CommunityIcon, GithubIcon, LogIcon, MainSettingsIcon, OwnerCrownIcon, PaintbrushIcon, PatchHelperIcon, PluginsIcon, ShareIcon, UpdaterIcon } from "@components/Icons";
 import {
     BackupAndRestoreTab,
     ChangelogTab,
     CloudTab,
+    CommunityTab,
+    CreditsTab,
+    OwnerOnlyTab,
     PatchHelperTab,
     PluginsTab,
+    SharePluginsTab,
     ThemesTab,
     UpdaterTab,
     VencordTab,
@@ -21,7 +25,7 @@ import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
 import { waitFor } from "@webpack";
-import { React } from "@webpack/common";
+import { React, UserStore } from "@webpack/common";
 import type { ComponentType, PropsWithChildren, ReactNode } from "react";
 
 const enum LayoutType {
@@ -101,16 +105,16 @@ const settings = definePluginSettings({
         description: "Where to put the Equicord settings section",
         options: [
             { label: "At the very top", value: "top" },
-            { label: "Above Billing section", value: "aboveNitro", default: true },
-            { label: "Below Billing section", value: "belowNitro" },
-            { label: "Above Games & Apps Settings", value: "aboveActivity" },
-            { label: "Below Games & Apps Settings", value: "belowActivity" },
+            { label: "Above the Nitro section", value: "aboveNitro", default: true },
+            { label: "Below the Nitro section", value: "belowNitro" },
+            { label: "Above Activity Settings", value: "aboveActivity" },
+            { label: "Below Activity Settings", value: "belowActivity" },
             { label: "At the very bottom", value: "bottom" },
         ] as { label: string; value: SettingsLocation; default?: boolean; }[]
     },
     includeVencordInfoWhenCopying: {
         type: OptionType.BOOLEAN,
-        description: "Also copy Equicord info (Equicord, Electron, Chromium) when clicking the version info in the bottom left area of the Settings page",
+        description: "Also copy Vencord info (Vencord, Electron, Chromium) when clicking the version info in the bottom left area of the Settings page",
         default: true
     }
 });
@@ -193,8 +197,8 @@ export default definePlugin({
         const equicordEntries: SettingsLayoutNode[] = [
             buildEntry({
                 key: "equicord_main",
-                title: "Equicord",
-                panelTitle: "Equicord Settings",
+                title: "PatchCord",
+                panelTitle: "Patchcord Settings",
                 Component: VencordTab,
                 Icon: MainSettingsIcon
             }),
@@ -205,6 +209,20 @@ export default definePlugin({
                 Icon: PluginsIcon
             }),
             buildEntry({
+                key: "equicord_community",
+                title: "Community",
+                panelTitle: "Community",
+                Component: CommunityTab,
+                Icon: CommunityIcon
+            }),
+            buildEntry({
+                key: "equicord_share_plugins",
+                title: "Share Plugins",
+                panelTitle: "Share Plugins",
+                Component: SharePluginsTab,
+                Icon: ShareIcon
+            }),
+            buildEntry({
                 key: "equicord_themes",
                 title: "Themes",
                 Component: ThemesTab,
@@ -213,7 +231,7 @@ export default definePlugin({
             !IS_UPDATER_DISABLED && UpdaterTab && buildEntry({
                 key: "equicord_updater",
                 title: "Updater",
-                panelTitle: "Equicord Updater",
+                panelTitle: "PatchCord Updater",
                 Component: UpdaterTab,
                 Icon: UpdaterIcon
             }),
@@ -242,13 +260,26 @@ export default definePlugin({
                 Component: PatchHelperTab,
                 Icon: PatchHelperIcon
             }),
+            buildEntry({
+                key: "equicord_credits",
+                title: "Credits",
+                Component: CreditsTab,
+                Icon: GithubIcon
+            }),
+            UserStore.getCurrentUser()?.id === "864612087741546527" && buildEntry({
+                key: "equicord_owner_only",
+                title: "Owner Only",
+                panelTitle: "Owner Only",
+                Component: OwnerOnlyTab,
+                Icon: OwnerCrownIcon
+            }),
             ...this.customEntries.map(buildEntry)
         ].filter(isTruthy);
 
         const equicordSection: SettingsLayoutNode = {
             key: "equicord_section",
             type: LayoutTypes.SECTION,
-            useTitle: () => "Equicord Settings",
+            useTitle: () => "Patchcord Settings",
             buildLayout: () => equicordEntries
         };
 
@@ -258,8 +289,8 @@ export default definePlugin({
             top: "user_section",
             aboveNitro: "billing_section",
             belowNitro: "billing_section",
-            aboveActivity: "games_and_apps_section",
-            belowActivity: "games_and_apps_section",
+            aboveActivity: "activity_section",
+            belowActivity: "activity_section",
             bottom: "utility_section"
         };
 

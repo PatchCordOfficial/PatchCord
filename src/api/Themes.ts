@@ -18,7 +18,6 @@
 
 import { Settings, SettingsStore, type ThemeActivationMode } from "@api/Settings";
 import { createAndAppendStyle } from "@utils/css";
-import { isNonNullish } from "@utils/guards";
 import { ThemeStore } from "@vencord/discord-types";
 import { PopoutWindowStore } from "@webpack/common";
 
@@ -53,9 +52,6 @@ async function toggle(isEnabled: boolean) {
         style.disabled = !isEnabled;
 }
 
-// for cleanup
-let previousThemeBlobObjectURLs = [] as string[];
-
 async function initThemes() {
     themesStyle ??= createAndAppendStyle("vencord-themes", userStyleRootNode);
 
@@ -82,22 +78,15 @@ async function initThemes() {
     }
 
     if (IS_WEB) {
-        previousThemeBlobObjectURLs.forEach(url => URL.revokeObjectURL(url));
+        for (const theme of enabledThemes) {
+            const mode = getThemeActivationMode(theme);
+            if (!shouldApplyTheme(mode, activeTheme)) continue;
 
-        const themesToApply = enabledThemes.filter(theme =>
-            shouldApplyTheme(getThemeActivationMode(theme), activeTheme)
-        );
-
-        const objectUrls = await Promise.all(themesToApply.map(async theme => {
             const themeData = await VencordNative.themes.getThemeData(theme);
-            if (!themeData) return null;
-
+            if (!themeData) continue;
             const blob = new Blob([themeData], { type: "text/css" });
-            return URL.createObjectURL(blob);
-        }));
-
-        previousThemeBlobObjectURLs = objectUrls.filter(isNonNullish);
-        previousThemeBlobObjectURLs.forEach(url => links.add(url));
+            links.add(URL.createObjectURL(blob));
+        }
     } else {
         const version = Date.now();
         for (const theme of enabledThemes) {

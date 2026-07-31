@@ -1,0 +1,11 @@
+.vc-early-helper-avatar-fallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--background-tertiary, #232428);
+}
+
+.vc-early-helper-avatar {
+    border-radius: 50%;
+}

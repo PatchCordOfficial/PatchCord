@@ -29,7 +29,7 @@ export interface Tag {
 }
 
 export function getTags() {
-    return Object.values(settings.store.tagsList);
+    return settings.store.tagsList;
 }
 
 export function getTag(name: string) {

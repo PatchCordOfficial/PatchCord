@@ -46,14 +46,16 @@ export let OptionalMessageOption: CommandOption = OptPlaceholder;
  */
 export let RequiredMessageOption: CommandOption = ReqPlaceholder;
 
-let idCounter = 99;
+// Discord's command list has random gaps for some reason, which can cause issues while rendering the commands
+// Add this offset to every added command to keep them unique
+let commandIdOffset: number;
 
 export const _init = function (cmds: VencordCommand[]) {
     try {
         BUILT_IN = cmds;
         OptionalMessageOption = cmds.find(c => (c.untranslatedName || c.displayName) === "shrug")!.options![0];
         RequiredMessageOption = cmds.find(c => (c.untranslatedName || c.displayName) === "me")!.options![0];
-        idCounter = Math.abs(BUILT_IN.map(x => Number(x.id)).sort((x, y) => x - y)[0]) + 1;
+        commandIdOffset = Math.abs(BUILT_IN.map(x => Number(x.id)).sort((x, y) => x - y)[0]) - BUILT_IN.length;
     } catch (e) {
         new Logger("CommandsAPI").error("Failed to load CommandsApi", e, " - cmds is", cmds);
     }
@@ -104,23 +106,21 @@ export function prepareOption<O extends CommandOption | VencordCommand>(opt: O):
     return opt;
 }
 
-const isSubCommandParent = (cmd: VencordCommand) => cmd.options?.[0]?.type === ApplicationCommandOptionType.SUB_COMMAND;
-const getSubCommandName = (cmd: VencordCommand, option: CommandOption) => `${cmd.name} ${option.name}`;
-
 // Yes, Discord registers individual commands for each subcommand
+// TODO: This probably doesn't support nested subcommands. If that is ever needed,
+// investigate
 function registerSubCommands(cmd: VencordCommand, plugin: string) {
     cmd.options?.forEach(o => {
         if (o.type !== ApplicationCommandOptionType.SUB_COMMAND)
             throw new Error("When specifying sub-command options, all options must be sub-commands.");
-
         const subCmd = {
             ...cmd,
             ...o,
             options: o.options !== undefined ? o.options : undefined,
             type: ApplicationCommandType.CHAT_INPUT,
+            name: `${cmd.name} ${o.name}`,
             id: `${o.name}-${cmd.id}`,
-            name: getSubCommandName(cmd, o),
-            displayName: getSubCommandName(cmd, o),
+            displayName: `${cmd.name} ${o.name}`,
             subCommandPath: [{
                 name: o.name,
                 type: o.type,
@@ -128,16 +128,8 @@ function registerSubCommands(cmd: VencordCommand, plugin: string) {
             }],
             rootCommand: cmd
         };
-        registerCommand(subCmd, plugin);
+        registerCommand(subCmd as any, plugin);
     });
-}
-
-function unregisterSubCommands(cmd: VencordCommand): boolean {
-    const results = BUILT_IN
-        .filter(c => c.rootCommand === cmd)
-        .map(c => unregisterCommand(c.name));
-
-    return results.length > 0 && results.every(x => x);
 }
 
 export function registerCommand<C extends VencordCommand>(command: C, plugin: string) {
@@ -156,30 +148,24 @@ export function registerCommand<C extends VencordCommand>(command: C, plugin: st
     command.isVencordCommand = true;
     command.untranslatedName ??= command.name;
     command.untranslatedDescription ??= command.description;
-    command.id ??= `-${idCounter++}`;
+    command.id ??= `-${BUILT_IN.length + commandIdOffset + 1}`;
     command.applicationId ??= "-1"; // BUILT_IN;
     command.type ??= ApplicationCommandType.CHAT_INPUT;
     command.inputType ??= ApplicationCommandInputType.BUILT_IN_TEXT;
     command.plugin ||= plugin;
 
     prepareOption(command);
-    commands[command.name] = command;
 
-    if (isSubCommandParent(command)) {
+    if (command.options?.[0]?.type === ApplicationCommandOptionType.SUB_COMMAND) {
         registerSubCommands(command, plugin);
         return;
     }
 
+    commands[command.name] = command;
     BUILT_IN.push(command);
 }
 
-export function unregisterCommand(name: string, isSubCommands = false) {
-    const cmd = commands[name];
-    if (cmd && isSubCommandParent(cmd)) {
-        delete commands[name];
-        return unregisterSubCommands(cmd);
-    }
-
+export function unregisterCommand(name: string) {
     const idx = BUILT_IN.findIndex(c => c.name === name);
     if (idx === -1)
         return false;

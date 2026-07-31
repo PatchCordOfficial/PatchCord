@@ -7,7 +7,7 @@
 import { definePluginSettings } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
 import { AchievementsIcon, AppsIcon, CreditCardIcon, EquicordIcon, GameControllerIcon, HammerAndChiselIcon, MainSettingsIcon, PencilSparkleIcon, UserIcon } from "@components/Icons";
-import { buildPluginMenuEntries, buildThemeMenuEntries } from "@equicordplugins/equicordToolbox/menu";
+import { buildPluginMenuEntries, buildThemeMenuEntries } from "@patchcordplugins/PatchCordToolbox/menu";
 import { Devs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import { getIntlMessage } from "@utils/discord";
@@ -16,7 +16,7 @@ import definePlugin, { OptionType } from "@utils/types";
 import { Icon } from "@vencord/discord-types";
 import { findCssClassesLazy } from "@webpack";
 import { ComponentDispatch, FocusLock, Menu, useEffect, useRef } from "@webpack/common";
-import type { HTMLAttributes, ReactElement, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 
 import fullHeightStyle from "./fullHeightContext.css?managed";
 
@@ -29,7 +29,7 @@ const SECTION_ICONS: Record<string, Icon> = {
     equicord_section: EquicordIcon,
     billing_section: CreditCardIcon,
     app_section: AppsIcon,
-    games_and_apps_section: GameControllerIcon,
+    activity_section: GameControllerIcon,
     developer_section: HammerAndChiselIcon,
     utility_section: MainSettingsIcon,
     playgrounds: AchievementsIcon,
@@ -192,7 +192,7 @@ export default definePlugin({
         return <Layer {...props} />;
     },
 
-    transformSettingsEntries(list: ReactElement<any>[]): ReactNode[] {
+    transformSettingsEntries(list) {
         const items: ReactNode[] = [];
         const SECTION_NAMES: Record<string, string> = {
             user_section: getIntlMessage("USER_SETTINGS"),

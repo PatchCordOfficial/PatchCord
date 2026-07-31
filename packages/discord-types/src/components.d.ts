@@ -545,13 +545,6 @@ export type ColorPicker = ComponentType<{
     disabled?: boolean;
 }>;
 
-export type RoleMemberPopout = ComponentType<{
-    popoutProps: PopoutProps;
-    guildId: string;
-    channelId: string;
-    roleId: string;
-}>;
-
 export type ComponentSection = ComponentType<PropsWithChildren<{
     heading?: string;
     disabled?: boolean;

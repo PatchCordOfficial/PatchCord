@@ -21,6 +21,7 @@
 import "../suppressExperimentalWarnings.js";
 import "../checkNodeVersion.js";
 
+import { createHash } from "crypto";
 import { exec, execSync } from "child_process";
 import esbuild, { build, context } from "esbuild";
 import { constants as FsConstants, readFileSync } from "fs";
@@ -48,7 +49,19 @@ if (!IS_COMPANION_TEST && process.argv.includes("--companion-test"))
     console.error("--companion-test must be run with --reporter for any effect");
 
 export const IS_UPDATER_DISABLED = process.argv.includes("--disable-updater");
-export const gitHash = process.env.EQUICORD_HASH || execSync("git rev-parse HEAD", { encoding: "utf-8" }).trim();
+export const gitHash = process.env.EQUICORD_HASH || getGitHash();
+
+function getGitHash() {
+    try {
+        return execSync("git rev-parse HEAD", { encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    } catch {
+        // Not a git checkout (e.g. the source was downloaded as a zip rather
+        // than cloned) or git isn't installed - fall back instead of crashing
+        // the whole build. Set the EQUICORD_HASH env var to override this.
+        console.warn("[Build] Not a git repository (or git isn't installed) - using a placeholder build hash.");
+        return "unknown";
+    }
+}
 
 export const banner = {
     js: `
@@ -147,7 +160,7 @@ export const globPlugins = kind => ({
         });
 
         build.onLoad({ filter, namespace: "import-plugins" }, async () => {
-            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "equicordplugins/_api", "equicordplugins/_core", "equicordplugins", "userplugins"];
+            const pluginDirs = ["plugins/_api", "plugins/_core", "plugins", "equicordplugins/_api", "equicordplugins/_core", "equicordplugins", "patchcordplugins/_api", "patchcordplugins/_core", "patchcordplugins", "userplugins"];
             let code = "";
             let pluginsCode = "\n";
             let metaCode = "\n";
@@ -164,6 +177,19 @@ export const globPlugins = kind => ({
                     if (fileName.startsWith("_") || fileName.startsWith(".")) continue;
                     if (fileName === "index.ts") continue;
                     if (/\.(zip|rar|7z|tar|gz|bz2)/.test(fileName)) continue;
+
+                    const pluginPath = file.isFile()
+                        ? join(fullDir, fileName)
+                        : await (async () => {
+                            for (const entry of ["index.ts", "index.tsx"]) {
+                                const candidate = join(fullDir, fileName, entry);
+                                if (await exists(candidate)) return candidate;
+                            }
+                            throw new Error(`Invalid plugin ${join(fullDir, fileName)}: could not resolve entry point`);
+                        })();
+
+                    const pluginSource = await readFile(pluginPath, "utf-8");
+                    const hash = createHash("sha256").update(pluginSource, "utf8").digest("hex");
 
                     const target = getPluginTarget(fileName);
 
@@ -188,7 +214,7 @@ export const globPlugins = kind => ({
                     const mod = `p${i}`;
                     code += `import ${mod} from "./${dir}/${fileName.replace(/\.tsx?$/, "")}";\n`;
                     pluginsCode += `[${mod}.name]:${mod},\n`;
-                    metaCode += `[${mod}.name]:${JSON.stringify({ folderName, userPlugin })},\n`;
+                    metaCode += `[${mod}.name]:${JSON.stringify({ folderName, userPlugin, hash })},\n`;
                     i++;
                 }
             }

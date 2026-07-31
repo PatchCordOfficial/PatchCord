@@ -23,8 +23,6 @@ import definePlugin, { IconComponent, StartAt } from "@utils/types";
 import { CloudUpload, MessageAttachment } from "@vencord/discord-types";
 import { DraftStore, DraftType, UploadAttachmentStore, UserStore, useStateFromStores } from "@webpack/common";
 
-const objectURLMap = new Map<string, string[]>();
-
 const getDraft = (channelId: string) => DraftStore.getDraft(channelId, DraftType.ChannelMessage);
 
 const getImageBox = (url: string): Promise<{ width: number, height: number; } | null> =>
@@ -44,8 +42,6 @@ const getAttachments = async (channelId: string) =>
         UploadAttachmentStore.getUploads(channelId, DraftType.ChannelMessage)
             .map(async (upload: CloudUpload) => {
                 const { isImage, filename, spoiler, item: { file } } = upload;
-
-                // FIXME: revoke object url to fix memory leak
                 const url = URL.createObjectURL(file);
                 const attachment: MessageAttachment = {
                     id: generateId(),
@@ -61,13 +57,13 @@ const getAttachments = async (channelId: string) =>
 
                 if (isImage) {
                     const box = await getImageBox(url);
-                    if (box) {
-                        attachment.width = box.width;
-                        attachment.height = box.height;
-                    }
+                    if (!box) return attachment;
+
+                    attachment.width = box.width;
+                    attachment.height = box.height;
                 }
 
-                return { attachment, objectURL: url };
+                return attachment;
             })
     );
 
@@ -100,20 +96,15 @@ const PreviewButton: ChatBarButtonFactory = ({ isAnyChat, isEmpty, type: { attac
     return (
         <ChatBarButton
             tooltip="Preview Message"
-            onClick={async () => {
-                const attachments = hasAttachments ? await getAttachments(channelId) : undefined;
-                const message = sendBotMessage(
+            onClick={async () =>
+                sendBotMessage(
                     channelId,
                     {
                         content: getDraft(channelId),
                         author: UserStore.getCurrentUser(),
-                        attachments: attachments?.map(a => a.attachment),
+                        attachments: hasAttachments ? await getAttachments(channelId) : undefined,
                     }
-                );
-
-                if (attachments)
-                    objectURLMap.set(message.id, attachments.map(a => a.objectURL));
-            }}
+                )}
             buttonProps={{
                 style: {
                     translate: "0 2px"
@@ -139,15 +130,5 @@ export default definePlugin({
     chatBarButton: {
         icon: PreviewIcon,
         render: PreviewButton
-    },
-
-    flux: {
-        MESSAGE_DELETE({ id: messageId }) {
-            const objectURLs = objectURLMap.get(messageId);
-            if (objectURLs) {
-                objectURLs.forEach(url => URL.revokeObjectURL(url));
-                objectURLMap.delete(messageId);
-            }
-        }
     }
 });

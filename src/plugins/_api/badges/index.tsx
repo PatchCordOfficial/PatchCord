@@ -26,7 +26,7 @@ import { copyWithToast } from "@utils/discord";
 import { Logger } from "@utils/Logger";
 import { shouldShowContributorBadge, shouldShowEquicordContributorBadge } from "@utils/misc";
 import definePlugin from "@utils/types";
-import { ContextMenuApi, Menu, Toasts, UserStore } from "@webpack/common";
+import { ContextMenuApi, FluxDispatcher, Menu, Toasts, UserProfileStore, UserStore } from "@webpack/common";
 
 import Plugins, { PluginMeta } from "~plugins";
 
@@ -85,19 +85,58 @@ const UserPluginContributorBadge: ProfileBadge = {
 let DonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 let EquicordDonorBadges = {} as Record<string, Array<Record<"tooltip" | "badge", string>>>;
 
-async function loadBadges(url: string, noCache = false) {
+async function loadBadges(url: string, noCache = true) {
     const init = {} as RequestInit;
     if (noCache) init.cache = "no-cache";
 
-    return await fetch(url, init).then(r => r.json());
+    const res = await fetch(url, init);
+    if (!res.ok) throw new Error(`${url} responded with ${res.status}`);
+    return res.json();
 }
 
-async function loadAllBadges(noCache = false) {
-    const vencordBadges = await loadBadges("https://badges.vencord.dev/badges.json", noCache);
-    const equicordBadges = await loadBadges("https://badge.equicord.org/badges.json", noCache);
+async function loadAllBadges(noCache = true) {
+    // Run both independently - if one host is down/misconfigured, that
+    // shouldn't also wipe out the badges we already have from the other,
+    // or from a previous successful fetch.
+    const [vencordResult, equicordResult] = await Promise.allSettled([
+        loadBadges("https://badges.vencord.dev/badges.json", noCache),
+        loadBadges("https://patchcord.itssolar.dev/badges.json", noCache)
+    ]);
 
-    DonorBadges = vencordBadges;
-    EquicordDonorBadges = equicordBadges;
+    if (vencordResult.status === "fulfilled") {
+        DonorBadges = vencordResult.value;
+    } else {
+        new Logger("BadgeAPI").error("Failed to load Vencord donor badges", vencordResult.reason);
+    }
+
+    if (equicordResult.status === "fulfilled") {
+        EquicordDonorBadges = equicordResult.value;
+    } else {
+        new Logger("BadgeAPI").error("Failed to load PatchCord donor badges", equicordResult.reason);
+    }
+
+    // getBadges() only actually re-runs when something re-renders the
+    // profile, and nothing was telling React that anything changed - so
+    // newly fetched badges just sat in memory until the whole client got
+    // reloaded. Emitting a change on the stores profile popouts/modals are
+    // subscribed to forces them to re-render right away.
+    UserStore.emitChange();
+    UserProfileStore.emitChange();
+}
+
+// Reopening a profile shouldn't have to wait for the next 30-minute
+// background refresh to notice a badge was added/removed server-side, but
+// we also don't want to hit the badge hosts on every single profile view.
+// Refetch on profile opens, throttled to at most once per minute.
+const PROFILE_OPEN_REFETCH_THROTTLE = 60 * 1000;
+let lastProfileTriggeredRefetch = 0;
+
+function onUserProfileFetchSuccess() {
+    const now = Date.now();
+    if (now - lastProfileTriggeredRefetch < PROFILE_OPEN_REFETCH_THROTTLE) return;
+    lastProfileTriggeredRefetch = now;
+
+    loadAllBadges().catch(e => new Logger("BadgeAPI").error("Failed to refresh badges on profile open", e));
 }
 
 let intervalId: any;
@@ -192,10 +231,13 @@ export default definePlugin({
         await loadAllBadges();
         clearInterval(intervalId);
         intervalId = setInterval(loadAllBadges, 1000 * 60 * 30); // 30 minutes
+
+        FluxDispatcher.subscribe("USER_PROFILE_FETCH_SUCCESS", onUserProfileFetchSuccess);
     },
 
     async stop() {
         clearInterval(intervalId);
+        FluxDispatcher.unsubscribe("USER_PROFILE_FETCH_SUCCESS", onUserProfileFetchSuccess);
     },
 
     getBadges(profile: { userId: string; guildId: string; }) {

@@ -24,7 +24,7 @@ import { RendererSettings } from "./settings";
 import { patchTrayMenu } from "./trayMenu";
 import { IS_VANILLA } from "./utils/constants";
 
-console.log("[Equicord] Starting up...");
+console.log("[PatchCord] Starting up...");
 
 // Our injector file at app/index.js
 const injectorPath = require.main!.filename;
@@ -52,32 +52,34 @@ if (!IS_VANILLA) {
         try {
             require("./hostUpdateHook").installHostUpdateHook();
         } catch (err) {
-            console.error("[Equicord] Failed to install host update hook", err);
+            console.error("[PatchCord] Failed to install host update hook", err);
         }
     }
 
-    // Repatch after host updates on Windows and Linux
-    if (process.platform === "win32" || process.platform === "linux") {
-        require("./persistAfterDiscordUpdates");
+    if (process.platform === "win32" && !IS_VESKTOP && !IS_EQUIBOP) {
+        /* before-quit fallback for the rare case the hook above never sees discord_desktop_core get required */
+        require("./patchWin32Updater");
     }
+    if (process.platform === "win32") {
 
-    if (process.platform === "win32" && settings.winCtrlQ) {
-        const originalBuild = Menu.buildFromTemplate;
-        Menu.buildFromTemplate = function (template) {
-            if (template[0]?.label === "&File") {
-                const { submenu } = template[0];
-                if (Array.isArray(submenu)) {
-                    submenu.push({
-                        label: "Quit (Hidden)",
-                        visible: false,
-                        acceleratorWorksWhenHidden: true,
-                        accelerator: "Control+Q",
-                        click: () => app.quit()
-                    });
+        if (settings.winCtrlQ) {
+            const originalBuild = Menu.buildFromTemplate;
+            Menu.buildFromTemplate = function (template) {
+                if (template[0]?.label === "&File") {
+                    const { submenu } = template[0];
+                    if (Array.isArray(submenu)) {
+                        submenu.push({
+                            label: "Quit (Hidden)",
+                            visible: false,
+                            acceleratorWorksWhenHidden: true,
+                            accelerator: "Control+Q",
+                            click: () => app.quit()
+                        });
+                    }
                 }
-            }
-            return originalBuild.call(this, template);
-        };
+                return originalBuild.call(this, template);
+            };
+        }
     }
 
     class BrowserWindow extends electron.BrowserWindow {
@@ -154,11 +156,13 @@ if (!IS_VANILLA) {
     process.env.DATA_DIR = join(app.getPath("userData"), "..", "Equicord");
 
     // Monkey patch commandLine to:
+    // - disable WidgetLayering: Fix DevTools context menus https://github.com/electron/electron/issues/38790
     // - disable UseEcoQoSForBackgroundProcess: Work around Discord unloading when in background
     const originalAppend = app.commandLine.appendSwitch;
     app.commandLine.appendSwitch = function (...args) {
         if (args[0] === "disable-features") {
             const disabledFeatures = new Set((args[1] ?? "").split(","));
+            disabledFeatures.add("WidgetLayering");
             disabledFeatures.add("UseEcoQoSForBackgroundProcess");
             args[1] += [...disabledFeatures].join(",");
         }
@@ -174,8 +178,8 @@ if (!IS_VANILLA) {
     app.commandLine.appendSwitch("disable-background-timer-throttling");
     app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
 } else {
-    console.log("[Equicord] Running in vanilla mode. Not loading Equicord");
+    console.log("[PatchCord] Running in vanilla mode. Not loading Equicord");
 }
 
-console.log("[Equicord] Loading original Discord app.asar");
+console.log("[PatchCord] Loading original Discord app.asar");
 require(require.main!.filename);
