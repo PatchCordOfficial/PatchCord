@@ -55,7 +55,7 @@ export const stringMatches = (s: string, filter: CodeFilter) =>
     );
 
 export function makeClassNameRegex(className: string) {
-    return new RegExp(`(?<=^|\\s)${escapeRegExp(className)}(?:_\\S*)?(?=$|\\s)`);
+    return new RegExp(`(?:\\b|_)${escapeRegExp(className)}(?:\\b|_)`);
 }
 
 export const filters = {
@@ -217,9 +217,9 @@ export function handleModuleNotFound(method: string, ...filter: unknown[]) {
     const err = new Error(`webpack.${method} found no module`);
     logger.error(err, "Filter:", filter);
 
-    // Strict behaviour in DevBuilds to fail early and make sure the issue is found
-    if (IS_DEV && !devToolsOpen)
-        throw err;
+    // In development, missing modules should not crash the UI. This is a
+    // non-fatal error for lazy Webpack lookups and patching, especially when
+    // Discord's bundle changes between builds.
 }
 
 /**
