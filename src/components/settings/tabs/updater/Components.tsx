@@ -7,7 +7,6 @@ import { Margins } from "@utils/margins";
 import * as DataStore from "@api/DataStore";
 import { React, useState, useEffect } from "@webpack/common";
 
-const INSTALLED_VERSION = "v16.0.0"; // Hardcoded installed client version for update comparison
 const LATEST_URL = "https://patchcord.itssolar.dev/installer/latest.json";
 const LAST_UPDATED_KEY = "PatchcordUpdater_lastUpdatedDate";
 
@@ -27,9 +26,8 @@ export function UpdaterDashboard() {
     useEffect(() => {
         const init = async () => {
             const known = await DataStore.get<string>(LAST_UPDATED_KEY);
-            const baseline = known ?? INSTALLED_VERSION;
-            setLastKnown(baseline);
-            await checkUpdates(baseline);
+            setLastKnown(known ?? null);
+            await checkUpdates(known ?? null);
         };
         init();
     }, []);
@@ -42,10 +40,18 @@ export function UpdaterDashboard() {
                 const data: UpdateManifest = await res.json();
                 setManifest(data);
 
-                const localVersion = currentKnown ?? INSTALLED_VERSION;
-                setLastKnown(localVersion);
+                const localVersion = currentKnown ?? null;
 
-                if (data.latest !== localVersion) {
+                if (localVersion === null) {
+                    // We have never recorded a version for this install (e.g.
+                    // fresh install/first launch after this feature shipped).
+                    // Assume the user is on whatever's currently "latest" so
+                    // we don't immediately nag them, and remember that as
+                    // our baseline going forward.
+                    await DataStore.set(LAST_UPDATED_KEY, data.latest);
+                    setLastKnown(data.latest);
+                    setIsOutdated(false);
+                } else if (data.latest !== localVersion) {
                     setIsOutdated(true);
                 } else {
                     setIsOutdated(false);
@@ -67,20 +73,38 @@ export function UpdaterDashboard() {
         VencordNative.native.openExternal(manifest.downloadUrl || "https://patchcord.itssolar.dev/download.html");
     };
 
+    const VersionInfoCard = (
+        <Card variant="primary" className={Margins.top20}>
+            <HeadingSecondary>Version Info</HeadingSecondary>
+            <Flex flexDirection="column" gap="4px" className={Margins.top8}>
+                <Paragraph>
+                    Current version: <strong>{lastKnown ?? "Unknown"}</strong>
+                </Paragraph>
+                <Paragraph>
+                    Latest version: <strong>{manifest ? manifest.latest : isChecking ? "Checking..." : "Unknown"}</strong>
+                </Paragraph>
+            </Flex>
+        </Card>
+    );
+
     if (isChecking && !manifest) {
         return (
-            <Card variant="primary" className={Margins.top20}>
-                <Flex alignItems="center" gap="1em">
-                    <div className="vc-spinner" style={{ width: 24, height: 24 }} />
-                    <Paragraph>Checking for updates...</Paragraph>
-                </Flex>
-            </Card>
+            <Flex flexDirection="column" gap="16px">
+                {VersionInfoCard}
+                <Card variant="primary">
+                    <Flex alignItems="center" gap="1em">
+                        <div className="vc-spinner" style={{ width: 24, height: 24 }} />
+                        <Paragraph>Checking for updates...</Paragraph>
+                    </Flex>
+                </Card>
+            </Flex>
         );
     }
 
     if (isOutdated && manifest) {
         return (
             <Flex flexDirection="column" gap="16px" className={Margins.top20}>
+                {VersionInfoCard}
                 <Card
                     style={{
                         background: "linear-gradient(135deg, rgba(88, 101, 242, 0.1), rgba(235, 69, 158, 0.1))",
@@ -130,19 +154,22 @@ export function UpdaterDashboard() {
     }
 
     return (
-        <Card variant="success" className={Margins.top20}>
-            <HeadingSecondary>🎉 You're fully up to date!</HeadingSecondary>
-            <Paragraph className={Margins.bottom16}>
-                You are running the latest release ({lastKnown}). We'll let you know when the next update drops.
-            </Paragraph>
-            <Button
-                look="outlined"
-                color="green"
-                disabled={isChecking}
-                onClick={() => checkUpdates(lastKnown)}
-            >
-                {isChecking ? "Checking..." : "Check Again"}
-            </Button>
-        </Card>
+        <Flex flexDirection="column" gap="16px" className={Margins.top20}>
+            {VersionInfoCard}
+            <Card variant="success">
+                <HeadingSecondary>🎉 You're fully up to date!</HeadingSecondary>
+                <Paragraph className={Margins.bottom16}>
+                    You are running the latest release ({lastKnown}). We'll let you know when the next update drops.
+                </Paragraph>
+                <Button
+                    look="outlined"
+                    color="green"
+                    disabled={isChecking}
+                    onClick={() => checkUpdates(lastKnown)}
+                >
+                    {isChecking ? "Checking..." : "Check Again"}
+                </Button>
+            </Card>
+        </Flex>
     );
 }

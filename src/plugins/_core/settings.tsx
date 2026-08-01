@@ -20,13 +20,12 @@ import {
     UpdaterTab,
     VencordTab,
 } from "@components/settings";
-import { gitHashShort } from "@shared/vencordUserAgent";
 import { Devs } from "@utils/constants";
 import { isTruthy } from "@utils/guards";
 import definePlugin, { IconProps, OptionType } from "@utils/types";
 import { waitFor } from "@webpack";
 import { React, UserStore } from "@webpack/common";
-import type { ComponentType, PropsWithChildren, ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 
 const enum LayoutType {
     ROOT = 0,
@@ -111,11 +110,6 @@ const settings = definePluginSettings({
             { label: "Below Activity Settings", value: "belowActivity" },
             { label: "At the very bottom", value: "bottom" },
         ] as { label: string; value: SettingsLocation; default?: boolean; }[]
-    },
-    includeVencordInfoWhenCopying: {
-        type: OptionType.BOOLEAN,
-        description: "Also copy Vencord info (Vencord, Electron, Chromium) when clicking the version info in the bottom left area of the Settings page",
-        default: true
     }
 });
 
@@ -136,17 +130,6 @@ export default definePlugin({
                     match: /\.RELEASE_CHANNEL/,
                     replace: "$&.replace(/^./, c => c.toUpperCase())"
                 },
-                {
-                    match: /"text-xxs\/normal".{0,300}?(?=null!=(\i)&&(.{0,20}\i\.\i.{0,200}?,children:).{0,15}?("span"),({className:\i\.\i,children:\["Build Override: ",\1\.id\]\})\)\}\))/,
-                    replace: (m, _buildOverride, makeRow, component, props) => {
-                        props = props.replace(/children:\[.+\]/, "");
-                        return `${m},$self.makeInfoElements(${component},${props}).map(e=>${makeRow}e})),`;
-                    }
-                },
-                {
-                    match: /copyValue:\i\.join\(" "\)/g,
-                    replace: "$& + $self.getInfoString()"
-                }
             ]
         },
         {
@@ -342,30 +325,4 @@ export default definePlugin({
         return support && version ? ` (${version})` : version;
     },
 
-    getInfoRows() {
-        const { electronVersion, chromiumVersion, getVersionInfo } = this;
-
-        const rows = [`Equicord ${gitHashShort}${getVersionInfo()}`];
-
-        if (electronVersion) rows.push(`Electron ${electronVersion}`);
-        if (chromiumVersion) rows.push(`Chromium ${chromiumVersion}`);
-
-        return rows;
-    },
-
-    getInfoString() {
-        if (!settings.store.includeVencordInfoWhenCopying) return "";
-        return "\n" + this.getInfoRows().join("\n");
-    },
-
-    makeInfoElements(
-        Component: ComponentType<React.PropsWithChildren>,
-        props: PropsWithChildren,
-    ) {
-        return this.getInfoRows().map((text, i) => (
-            <Component key={i} {...props}>
-                {text}
-            </Component>
-        ));
-    },
 });

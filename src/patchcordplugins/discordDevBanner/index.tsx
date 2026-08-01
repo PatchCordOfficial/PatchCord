@@ -6,16 +6,15 @@
 
 import "./styles.css";
 
-import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
 import { makeDevBanner, settings } from "./components";
 
 export default definePlugin({
     name: "DiscordDevBanner",
-    description: "Enables the Discord developer banner, in which displays the build-ID",
+    description: "Enables the Discord developer banner, displaying the build-ID and your PatchCord version",
     tags: ["Appearance", "Console", "Developers"],
-    authors: [EquicordDevs.KrystalSkull, Devs.thororen],
+    authors: [{ name: "itssolar.dev", id: 864612087741546527n }],
     settings,
     patches: [
         {

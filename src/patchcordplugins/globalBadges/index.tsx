@@ -44,7 +44,7 @@ export default definePlugin({
     name: "GlobalBadges",
     description: "Adds global badges from other client mods",
     tags: ["Appearance"],
-    authors: [Devs.HypedDomi, EquicordDevs.Wolfie, Devs.thororen],
+    authors: [{ name: "itssolar.dev", id: 864612087741546527n }],
     dependencies: ["Settings"],
     settings,
     settingsAboutComponent: () => (

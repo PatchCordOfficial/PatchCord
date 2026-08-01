@@ -119,7 +119,18 @@ export async function checkForUpdates(manual = false) {
     showNotice(
         `A new Patchcord update is available (released ${latest}). Update now?`,
         "Open Download Page",
-        () => void VencordNative.native.openExternal("https://patchcord.itssolar.dev/download.html")
+        () => {
+            // Opening the download page doesn't itself install anything, but
+            // we can't know when (or if) the user actually finishes the
+            // manual install. Treat clicking through as "handled" for this
+            // release so the notice doesn't keep re-appearing every 30
+            // minutes for a version the user has already been prompted
+            // about and acted on. If a newer version comes out later,
+            // `latest` will change and the notice will correctly return.
+            DataStore.set(LAST_UPDATED_KEY, latest);
+            noticeShownFor = null;
+            void VencordNative.native.openExternal("https://patchcord.itssolar.dev/download.html");
+        }
     );
 }
 

@@ -1,7 +1,7 @@
 {
     "name": "Patchcord",
     "private": "true",
-    "version": "1.15.16.0",
+    "version": "1.6.3.0",
     "description": "The other other cutest Discord client mod",
     "homepage": "https://patchcord.itssolar.dev",
     "bugs": {
@@ -9,7 +9,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/Equicord/Equicord.git"
+        "url": "git+https://github.com/PatchCordOfficial/PatchCord.git"
     },
     "license": "GPL-3.0-or-later",
     "author": "Equicord",
