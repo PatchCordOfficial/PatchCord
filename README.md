@@ -1,54 +1,56 @@
 # [<img src="./browser/icon.png" width="40" align="left" alt="PatchCord">](https://github.com/PatchCordOfficial/PatchCord) PatchCord
 
 [![Tests](https://github.com/PatchCordOfficial/PatchCord/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/PatchCordOfficial/PatchCord/actions/workflows/test.yml)
-[![GitHub](https://img.shields.io/badge/GitHub-PatchCord-black?style=flat\&logo=github)](https://github.com/PatchCordOfficial/PatchCord)
+[![GitHub](https://img.shields.io/badge/GitHub-PatchCord-black?style=flat&logo=github)](https://github.com/PatchCordOfficial/PatchCord)
 
-PatchCord is a fork of [Equicord](https://github.com/Equicord/Equicord), which itself is a fork of [Vencord](https://github.com/Vendicated/Vencord). It expands upon both projects with additional plugins, features, UI improvements, and quality-of-life enhancements while maintaining compatibility with the Discord desktop client.
+PatchCord is a fork of [Equicord](https://github.com/Equicord/Equicord), which itself is a fork of [Vencord](https://github.com/Vendicated/Vencord).
 
-You can visit the **GitHub repository** for updates, releases, issues, and discussions:
+It expands upon both projects with additional plugins, quality-of-life improvements, interface enhancements, and exclusive PatchCord features while remaining compatible with the Discord desktop client.
 
-https://github.com/PatchCordOfficial/PatchCord
+---
 
-## Included Plugins
+## Features
 
-PatchCord includes all of the plugins from Equicord, alongside additional PatchCord-exclusive plugins and improvements.
+- Includes every plugin from Equicord
+- PatchCord-exclusive plugins
+- Additional UI improvements
+- Extra customization options
+- Quality-of-life enhancements
+- Open source
 
-## Installing / Uninstalling
+---
+
+## Downloads
 
 ### Windows
 
-* GUI Installer *(Coming Soon)*
-* CLI Installer *(Coming Soon)*
+| Installer | Download |
+|-----------|----------|
+| GUI Installer | **[Download](https://patchcord.itssolar.dev/download/gui/publish.zip)** |
 
-### macOS
-
-* Intel *(Coming Soon)*
-* Apple Silicon *(Coming Soon)*
-
-### Linux
-
-* GUI *(Coming Soon)*
-* CLI *(Coming Soon)*
+---
 
 ## Building PatchCord
 
-### Dependencies
+### Requirements
 
-The following are required:
+Install the following before building:
 
-* [Git](https://git-scm.com/download)
-* [Node.js LTS](https://nodejs.org/)
-* pnpm
+- [Git](https://git-scm.com/download)
+- [Node.js LTS](https://nodejs.org/)
+- pnpm
 
 Install **pnpm**:
 
 ```sh
-npm i -g pnpm
+npm install -g pnpm
 ```
 
-> **Important:** From this point onward, do **not** use an Administrator or root terminal, as it can cause permission issues with your Discord installation.
+> **Important**
+>
+> Do **not** use an Administrator or root terminal when building or injecting PatchCord, as this can cause permission issues with your Discord installation.
 
-Clone PatchCord:
+Clone the repository:
 
 ```sh
 git clone https://github.com/PatchCordOfficial/PatchCord.git
@@ -67,7 +69,7 @@ Build PatchCord:
 pnpm build
 ```
 
-Inject PatchCord into your desktop client:
+Inject PatchCord into the Discord desktop client:
 
 ```sh
 pnpm inject
@@ -79,24 +81,46 @@ Build the browser extension:
 pnpm buildWeb
 ```
 
-After building the web extension, locate the generated ZIP inside the `dist` directory and install it according to your browser's extension loading instructions.
+The generated extension ZIP will be located inside the `dist` directory.
 
-> Firefox requires the Developer Edition (or compatible builds) for unsigned extensions.
+> Firefox requires Developer Edition (or another build that allows unsigned extensions).
+
+---
 
 ## Documentation
 
-Documentation is available at:
+Documentation, guides, and setup instructions are available here:
 
 **https://patchcord.itssolar.dev/docs.html**
 
+---
+
+## Repository
+
+GitHub Repository:
+
+**https://github.com/PatchCordOfficial/PatchCord**
+
+You can use the repository to:
+
+- Download the latest releases
+- Report bugs
+- Request features
+- Browse the source code
+- Join project discussions
+
+---
+
 ## Credits
 
-A huge thank you to the developers who made PatchCord possible.
+PatchCord wouldn't exist without these amazing projects and developers.
 
-* [Vendicated](https://github.com/Vendicated) — Creator of **Vencord**
-* [Equicord Contributors](https://github.com/Equicord/Equicord) — Maintainers of **Equicord**
-* [verticalsync](https://github.com/verticalsync) — Creator of **Suncord**
-* Everyone who has contributed to PatchCord
+- [Vendicated](https://github.com/Vendicated) — Creator of **Vencord**
+- [Equicord Contributors](https://github.com/Equicord/Equicord) — Maintainers of **Equicord**
+- [verticalsync](https://github.com/verticalsync) — Creator of **Suncord**
+- Everyone who has contributed to PatchCord ❤️
+
+---
 
 ## Star History
 
@@ -104,21 +128,23 @@ A huge thank you to the developers who made PatchCord possible.
     <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=PatchCordOfficial/PatchCord&type=Timeline" />
 </a>
 
+---
+
 ## Disclaimer
 
 Discord is a trademark of Discord Inc. It is mentioned solely for descriptive purposes and does not imply any affiliation with or endorsement by Discord Inc.
 
-PatchCord is an independent community project based on the open-source work of Vencord and Equicord. It is not affiliated with Discord Inc., Vencord, or Equicord.
+PatchCord is an independent open-source community project built upon the work of Vencord and Equicord. It is **not affiliated with, endorsed by, or associated with Discord Inc., Vencord, or Equicord.**
 
 <details>
-<summary>Using PatchCord violates Discord's Terms of Service</summary>
+<summary><strong>Using PatchCord and Discord's Terms of Service</strong></summary>
 
 Like all Discord client modifications, PatchCord technically violates Discord's Terms of Service.
 
-However, there are currently no known cases of users being banned solely for using PatchCord, Equicord, or Vencord. As long as you avoid plugins that automate abusive behavior or break Discord's rules, the risk is generally considered low.
+There are currently **no known cases** of users being banned solely for using PatchCord, Equicord, or Vencord. Avoid plugins that automate abusive behavior or otherwise violate Discord's rules.
 
-That said, if your Discord account is especially important to you, using the official Discord client is always the safest option.
+If your Discord account is especially important to you, using the official Discord client remains the safest option.
 
-You should also avoid posting screenshots showing PatchCord in communities where client modifications are prohibited.
+It is also recommended that you avoid posting screenshots showing PatchCord in communities that prohibit modified Discord clients.
 
 </details>
