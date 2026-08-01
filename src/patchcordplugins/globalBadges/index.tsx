@@ -8,7 +8,7 @@ import "./styles.css";
 
 import { BadgePosition, ProfileBadge } from "@api/Badges";
 import { Button } from "@components/Button";
-import { AchievementsIcon } from "@components/Icons";
+import { CustomBadgesIcon } from "@components/Icons";
 import { BadgeContextMenu } from "@plugins/_api/badges";
 import SettingsPlugin from "@plugins/_core/settings";
 import { Devs, EquicordDevs } from "@utils/constants";
@@ -70,7 +70,7 @@ export default definePlugin({
             key: "equicord_custom_badges",
             title: "Custom Badges",
             Component: CustomBadgesTab,
-            Icon: AchievementsIcon
+            Icon: CustomBadgesIcon
         });
     },
     async stop() {

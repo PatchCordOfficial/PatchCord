@@ -213,13 +213,14 @@ function CustomBadgesTab() {
             </div>
 
             <div className={classes(Margins.top16, cl("toolbar"))}>
-                <TextInput
-                    autoFocus
-                    value={search}
-                    placeholder={`Search ${userIds.length} user${userIds.length === 1 ? "" : "s"}...`}
-                    onChange={setSearch}
-                    className={cl("search")}
-                />
+                <div className={cl("search-wrap")}>
+                    <TextInput
+                        autoFocus
+                        value={search}
+                        placeholder={`Search ${userIds.length} user${userIds.length === 1 ? "" : "s"}...`}
+                        onChange={setSearch}
+                    />
+                </div>
                 <Select
                     options={sortOptions}
                     isSelected={v => v === sortMode}

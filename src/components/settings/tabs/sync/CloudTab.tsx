@@ -39,7 +39,11 @@ import { Alerts, SearchableSelect, Select, useState } from "@webpack/common";
 const ICON_STYLE: React.CSSProperties = { width: 20, height: 20, borderRadius: 4, verticalAlign: "middle" };
 
 function EquicordIcon() {
-    return <img src="https://patchcord.itssolar.dev/assets/favicon.png" alt="Equicord" style={ICON_STYLE} />;
+    return <img src="https://equicord.org/assets/favicon.png" alt="Equicord" style={ICON_STYLE} />;
+}
+
+function PatchCordIcon() {
+    return <img src="https://patchcord.itssolar.dev/assets/favicon.png" alt="PatchCord" style={ICON_STYLE} />;
 }
 
 function VencordIcon() {
@@ -59,6 +63,7 @@ function validateUrl(url: string) {
 }
 
 const cloudBackendOptions = [
+    { label: "PatchCord Cloud", value: "https://patchcord.itssolar.dev/cloud" },
     { label: "Equicord Cloud", value: "https://cloud.equicord.org/" },
     { label: "Vencord Cloud", value: "https://api.vencord.dev/" }
 ];
@@ -128,7 +133,11 @@ function CloudTab() {
                     value={cloudBackendOptions.find(o => o.value === cloud.url)?.value}
                     onChange={v => changeUrl(v)}
                     closeOnSelect={true}
-                    renderOptionPrefix={o => o?.value?.includes("equicord") ? <EquicordIcon /> : <VencordIcon />}
+                    renderOptionPrefix={o => {
+                        if (o?.value?.includes("patchcord")) return <PatchCordIcon />;
+                        if (o?.value?.includes("equicord")) return <EquicordIcon />;
+                        return <VencordIcon />;
+                    }}
                 />
             </div>
 

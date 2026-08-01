@@ -27,7 +27,6 @@ import { isAnyPluginDev } from "@utils/misc";
 import { relaunch } from "@utils/native";
 import { Alerts, GuildMemberStore, React, UserStore } from "@webpack/common";
 
-import { subscribeToOnlineCount } from "../../../../patchcordplugins/patchcordBroadcasts/index";
 import { MacOSVibrancySettings } from "./MacVibrancySettings";
 import { NotificationSection } from "./NotificationSettings";
 import { PatchcordBanner } from "./PatchcordBanner";
@@ -153,40 +152,11 @@ function Switches() {
 
 function EquicordSettings() {
     const user = UserStore?.getCurrentUser();
-    const [onlineCount, setOnlineCount] = React.useState(0);
-
-    React.useEffect(() => {
-        // Subscribe to live online users count updates
-        const unsubscribe = subscribeToOnlineCount(setOnlineCount);
-        return unsubscribe;
-    }, []);
 
     return (
         <SettingsTab>
             <PatchcordBanner />
 
-            <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "8px 16px",
-                background: "var(--background-modifier-accent)",
-                borderRadius: 8,
-                fontWeight: 600,
-                color: "var(--text-normal)",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                marginTop: 16,
-                width: "fit-content"
-            }}>
-                <div style={{
-                    width: 10,
-                    height: 10,
-                    backgroundColor: "#3ba55c", // Discord green
-                    borderRadius: "50%",
-                    boxShadow: "0 0 8px #3ba55c"
-                }} />
-                {onlineCount} Users Online
-            </div>
             {isAnyPluginDev(user?.id) && (
                 <SpecialCard
                     title="Contributions"

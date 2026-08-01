@@ -10,15 +10,19 @@ import { Logger } from "@utils/Logger";
 import definePlugin, { PluginNative } from "@utils/types";
 import { Toasts } from "@webpack/common";
 
+function normalizeVersion(v: string): string {
+    return v.trim().replace(/^v/i, "");
+}
+
 const Native = VencordNative.pluginHelpers.PatchcordUpdater as PluginNative<typeof import("./native")>;
 
 const logger = new Logger("PatchcordUpdater");
 
-// The date (from the manifest's "updates.latest" field) that the user has
-// actually updated to. Only set after a real, successful update - never
-// just from dismissing/seeing the notice - so the prompt keeps reappearing
-// on every check until they update, but never nags again for a date they've
-// already installed.
+// Tracks the "latest" version the user has already been prompted about and
+// dismissed/acted on (via the notice or the toolbox action), so a background
+// re-check doesn't nag again for the same release. Whether the user is
+// actually up to date is determined by comparing the manifest's "latest"
+// against the real installed VERSION, not this key.
 const LAST_UPDATED_KEY = "PatchcordUpdater_lastUpdatedDate";
 
 const CHECK_INTERVAL = 1000 * 60 * 30; // 30 minutes
@@ -83,24 +87,18 @@ export async function checkForUpdates(manual = false) {
     }
 
     const latest = manifest.latest;
-    const lastUpdated = await DataStore.get<string>(LAST_UPDATED_KEY);
+    const dismissedFor = await DataStore.get<string>(LAST_UPDATED_KEY);
 
-    // First time this feature has ever run: baseline to whatever's
-    // currently "latest" so existing users aren't immediately nagged about
-    // an "update" they already effectively have.
-    if (lastUpdated === undefined) {
-        await DataStore.set(LAST_UPDATED_KEY, latest);
+    if (normalizeVersion(latest) === normalizeVersion(VERSION)) {
+        noticeShownFor = null;
         if (manual) {
             Toasts.show({ id: Toasts.genId(), message: "Patchcord is up to date!", type: Toasts.Type.SUCCESS });
         }
         return;
     }
 
-    if (lastUpdated === latest) {
-        noticeShownFor = null;
-        if (manual) {
-            Toasts.show({ id: Toasts.genId(), message: "Patchcord is up to date!", type: Toasts.Type.SUCCESS });
-        }
+    if (!manual && dismissedFor === latest) {
+        // Already prompted and the user dismissed/actioned this exact release.
         return;
     }
 

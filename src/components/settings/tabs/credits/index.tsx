@@ -23,6 +23,11 @@ interface CreditEntry {
 
 const credits: CreditEntry[] = [
     {
+        name: "PatchCord",
+        description: "The source code for PatchCord itself — the client mod you're currently running.",
+        href: "https://github.com/PatchCordOfficial/PatchCord"
+    },
+    {
         name: "Equicord",
         description: "PatchCord is built on top of Equicord, and includes many of its plugins and features.",
         href: "https://github.com/Equicord/Equicord"

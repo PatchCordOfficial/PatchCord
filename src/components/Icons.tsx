@@ -1237,6 +1237,32 @@ export function AchievementsIcon(props: IconProps) {
     );
 }
 
+export function CustomBadgesIcon(props: IconProps) {
+    return (
+        <Icon
+            {...props}
+            viewBox="0 0 24 24"
+        >
+            <path
+                fill={props.fill || "currentColor"}
+                d="M8.6 13.6 5 21l4-1.6L11.4 22l1.1-6.9-3.9-1.5ZM15.4 13.6l3.6 7.4-4-1.6L12.6 22l-1.1-6.9 3.9-1.5Z"
+            />
+            <circle
+                cx="12"
+                cy="9"
+                r="6.25"
+                fill="none"
+                stroke={props.fill || "currentColor"}
+                strokeWidth="1.8"
+            />
+            <path
+                fill={props.fill || "currentColor"}
+                d="M12 5.3 13 7.6l2.5.3-1.9 1.7.5 2.5L12 10.9l-2.1 1.2.5-2.5-1.9-1.7 2.5-.3Z"
+            />
+        </Icon>
+    );
+}
+
 export function BadgeIcon(props: IconProps) {
     return (
         <Icon

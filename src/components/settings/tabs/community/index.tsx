@@ -10,16 +10,28 @@ import { Button } from "@components/Button";
 import { Card } from "@components/Card";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { HeadingTertiary } from "@components/Heading";
+import { CommunityIcon } from "@components/Icons";
 import { Paragraph } from "@components/Paragraph";
 import { SettingsTab, wrapTab } from "@components/settings/tabs/BaseTab";
 import { fetchOnlineUsers, OnlineUser } from "@patchcordplugins/patchcordBroadcasts";
 import { debounce } from "@shared/debounce";
+import { classNameFactory } from "@utils/css";
 import { Margins } from "@utils/margins";
+import { classes } from "@utils/misc";
 import { React, TextInput, UserStore, UserUtils } from "@webpack/common";
+
+const cl = classNameFactory("vc-community-");
 
 const POLL_INTERVAL_MS = 5 * 1000;
 
-function UserAvatar({ id, fallback }: { id: string; fallback: string | null; }) {
+const STATUS_META: Record<string, { color: string; label: string; }> = {
+    online: { color: "var(--status-online, #23a55a)", label: "Online" },
+    idle: { color: "var(--status-idle, #f0b232)", label: "Idle" },
+    dnd: { color: "var(--status-danger, #f23f42)", label: "Do Not Disturb" },
+    offline: { color: "var(--status-offline, #80848e)", label: "Offline" }
+};
+
+function UserAvatar({ id, fallback, status }: { id: string; fallback: string | null; status: string; }) {
     const [avatarUrl, setAvatarUrl] = React.useState<string | null>(() => {
         try {
             const cached = UserStore.getUser(id);
@@ -44,22 +56,29 @@ function UserAvatar({ id, fallback }: { id: string; fallback: string | null; }) 
         return () => { cancelled = true; };
     }, [id]);
 
-    if (!avatarUrl) {
-        return <div className="vc-community-avatar-fallback" />;
-    }
+    const meta = STATUS_META[status] ?? STATUS_META.online;
 
-    return <img className="vc-community-avatar" src={avatarUrl} alt="" />;
+    return (
+        <div className={cl("avatar-ring")}>
+            {avatarUrl
+                ? <img className={classes(cl("avatar"), status === "offline" && cl("avatar-offline"))} src={avatarUrl} alt="" />
+                : <div className={cl("avatar-fallback")} />}
+            <span className={cl("status-dot")} style={{ background: meta.color }} />
+        </div>
+    );
 }
 
-function UserRow({ user }: { user: OnlineUser; }) {
+function UserRow({ user, index }: { user: OnlineUser; index: number; }) {
+    const meta = STATUS_META[user.status] ?? STATUS_META.online;
+
     return (
-        <Card className="vc-community-user-card">
-            <UserAvatar id={user.user_id} fallback={user.avatar} />
-            <div className="vc-community-user-meta">
-                <span className="vc-community-username">{user.username}</span>
-                <span className="vc-community-userid">{user.user_id}</span>
+        <Card className={classes(cl("user-card"), user.status === "offline" && cl("user-card-offline"))} style={{ animationDelay: `${Math.min(index, 12) * 25}ms` }}>
+            <UserAvatar id={user.user_id} fallback={user.avatar} status={user.status} />
+            <div className={cl("user-meta")}>
+                <span className={cl("username")}>{user.username}</span>
+                <span className={cl("userid")}>{user.user_id}</span>
             </div>
-            <span className="vc-community-status-dot" />
+            <span className={cl("status-pill")} style={{ color: meta.color, borderColor: meta.color }}>{meta.label}</span>
         </Card>
     );
 }
@@ -99,18 +118,29 @@ function CommunityContent() {
         []
     );
 
+    const activeUsers = users.filter(u => u.status !== "offline");
+    const offlineUsers = users.filter(u => u.status === "offline");
+
     return (
         <>
-            <Paragraph className={Margins.bottom16}>
-                Everyone currently online in PatchCord, updated live.
-            </Paragraph>
-
-            <HeadingTertiary className={Margins.bottom8}>
-                {total} user{total === 1 ? "" : "s"} online
-            </HeadingTertiary>
+            <div className={classes(Margins.bottom16, cl("hero"))}>
+                <div className={cl("hero-icon")}>
+                    <CommunityIcon width={26} height={26} />
+                </div>
+                <div className={cl("hero-copy")}>
+                    <HeadingTertiary className={cl("hero-title")}>Community</HeadingTertiary>
+                    <Paragraph className={cl("hero-subtitle")}>
+                        Everyone who's used PatchCord, and who's around right now.
+                    </Paragraph>
+                </div>
+                <div className={cl("hero-stat")}>
+                    <span className={cl("hero-stat-value")}>{activeUsers.length}</span>
+                    <span className={cl("hero-stat-label")}>{activeUsers.length === 1 ? "User" : "Users"} online</span>
+                </div>
+            </div>
 
             <ErrorBoundary noop>
-                <div className={Margins.bottom16}>
+                <div className={classes(Margins.bottom16, cl("search-wrap"))}>
                     <TextInput
                         placeholder="Search by username or user ID..."
                         onChange={onSearchChange}
@@ -119,19 +149,37 @@ function CommunityContent() {
                 </div>
             </ErrorBoundary>
 
-            <div className="vc-community-list">
-                {!loading && users.length === 0 && (
-                    <Paragraph className="vc-community-empty">
-                        No online users found.
-                    </Paragraph>
-                )}
-                {users.map(user => (
-                    <UserRow key={user.user_id} user={user} />
-                ))}
-            </div>
+            {!loading && users.length === 0 && (
+                <Paragraph className={cl("empty")}>
+                    No users found.
+                </Paragraph>
+            )}
+
+            {!!activeUsers.length && (
+                <div className={cl("section")}>
+                    <div className={cl("section-list")}>
+                        {activeUsers.map((user, i) => (
+                            <UserRow key={user.user_id} user={user} index={i} />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {!!offlineUsers.length && (
+                <div className={cl("section")}>
+                    <HeadingTertiary className={classes(Margins.top16, Margins.bottom8, cl("section-title"))}>
+                        Offline — {offlineUsers.length}
+                    </HeadingTertiary>
+                    <div className={cl("section-list")}>
+                        {offlineUsers.map((user, i) => (
+                            <UserRow key={user.user_id} user={user} index={i} />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {pages > 1 && (
-                <div className="vc-community-pagination">
+                <div className={cl("pagination")}>
                     <Button
                         size="small"
                         variant="secondary"
@@ -140,7 +188,7 @@ function CommunityContent() {
                     >
                         Previous
                     </Button>
-                    <span className="vc-community-page-label">
+                    <span className={cl("page-label")}>
                         Page {page} of {pages}
                     </span>
                     <Button

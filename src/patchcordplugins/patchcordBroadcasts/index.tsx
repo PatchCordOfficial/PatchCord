@@ -2,7 +2,7 @@ import { Link } from "@components/Link";
 import { DataStore } from "@api/index";
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
-import { React, Toasts, UserStore } from "@webpack/common";
+import { React, Toasts, PresenceStore, UserStore } from "@webpack/common";
 
 const BROADCAST_URL = "https://patchcord.itssolar.dev/broadcast/broadcast.json";
 const PING_URL = "https://patchcord.itssolar.dev/broadcast/api/ping.php";
@@ -49,6 +49,16 @@ interface BroadcastData {
     link?: string;
 }
 
+function getLocalStatus(): "online" | "idle" | "dnd" {
+    try {
+        const status = PresenceStore?.getStatus?.(UserStore.getCurrentUser()?.id);
+        if (status === "idle" || status === "dnd") return status;
+        return "online";
+    } catch {
+        return "online";
+    }
+}
+
 async function sendPresencePing() {
     try {
         const user = UserStore.getCurrentUser();
@@ -60,7 +70,8 @@ async function sendPresencePing() {
             body: JSON.stringify({
                 user_id: user.id,
                 username: user.globalName || user.username,
-                avatar: user.getAvatarURL ? user.getAvatarURL(undefined, 128, true) : null
+                avatar: user.getAvatarURL ? user.getAvatarURL(undefined, 128, true) : null,
+                status: getLocalStatus()
             })
         });
 
@@ -76,10 +87,14 @@ async function sendPresencePing() {
     }
 }
 
+export type UserPresenceStatus = "online" | "idle" | "dnd" | "offline";
+
 export interface OnlineUser {
     user_id: string;
     username: string;
     avatar: string | null;
+    status: UserPresenceStatus;
+    last_seen?: number;
 }
 
 export interface OnlineUsersPage {
@@ -91,7 +106,10 @@ export interface OnlineUsersPage {
 
 export async function fetchOnlineUsers(page: number, search: string): Promise<OnlineUsersPage | null> {
     try {
-        const params = new URLSearchParams({ list: "1", page: String(page) });
+        // include_offline asks the backend to also return users who have
+        // pinged before but aren't currently online, tagged status: "offline",
+        // so the Community tab can render a separate offline section.
+        const params = new URLSearchParams({ list: "1", page: String(page), include_offline: "1" });
         if (search) params.set("search", search);
 
         const res = await fetch(`${PING_URL}?${params.toString()}`, { cache: "no-store" });
@@ -101,7 +119,13 @@ export async function fetchOnlineUsers(page: number, search: string): Promise<On
         if (!Array.isArray(data.users)) return null;
 
         return {
-            users: data.users,
+            users: data.users.map((u: any) => ({
+                user_id: u.user_id,
+                username: u.username,
+                avatar: u.avatar ?? null,
+                status: (u.status === "idle" || u.status === "dnd" || u.status === "offline") ? u.status : "online",
+                last_seen: u.last_seen
+            })),
             total: data.total ?? data.users.length,
             page: data.page ?? page,
             pages: data.pages ?? 1

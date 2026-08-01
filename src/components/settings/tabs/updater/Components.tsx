@@ -10,6 +10,10 @@ import { React, useState, useEffect } from "@webpack/common";
 const LATEST_URL = "https://patchcord.itssolar.dev/installer/latest.json";
 const LAST_UPDATED_KEY = "PatchcordUpdater_lastUpdatedDate";
 
+function normalizeVersion(v: string): string {
+    return v.trim().replace(/^v/i, "");
+}
+
 export interface UpdateManifest {
     latest: string;
     buildDate: string;
@@ -20,42 +24,20 @@ export interface UpdateManifest {
 export function UpdaterDashboard() {
     const [manifest, setManifest] = useState<UpdateManifest | null>(null);
     const [isChecking, setIsChecking] = useState(true);
-    const [lastKnown, setLastKnown] = useState<string | null>(null);
     const [isOutdated, setIsOutdated] = useState(false);
 
     useEffect(() => {
-        const init = async () => {
-            const known = await DataStore.get<string>(LAST_UPDATED_KEY);
-            setLastKnown(known ?? null);
-            await checkUpdates(known ?? null);
-        };
-        init();
+        checkUpdates();
     }, []);
 
-    const checkUpdates = async (currentKnown?: string | null) => {
+    const checkUpdates = async () => {
         setIsChecking(true);
         try {
             const res = await fetch(LATEST_URL, { cache: "no-store" });
             if (res.ok) {
                 const data: UpdateManifest = await res.json();
                 setManifest(data);
-
-                const localVersion = currentKnown ?? null;
-
-                if (localVersion === null) {
-                    // We have never recorded a version for this install (e.g.
-                    // fresh install/first launch after this feature shipped).
-                    // Assume the user is on whatever's currently "latest" so
-                    // we don't immediately nag them, and remember that as
-                    // our baseline going forward.
-                    await DataStore.set(LAST_UPDATED_KEY, data.latest);
-                    setLastKnown(data.latest);
-                    setIsOutdated(false);
-                } else if (data.latest !== localVersion) {
-                    setIsOutdated(true);
-                } else {
-                    setIsOutdated(false);
-                }
+                setIsOutdated(normalizeVersion(data.latest) !== normalizeVersion(VERSION));
             }
         } catch (e) {
             console.error("Failed to fetch PatchCord update manifest", e);
@@ -65,11 +47,7 @@ export function UpdaterDashboard() {
 
     const markAsUpdated = async () => {
         if (!manifest) return;
-        // In this installer flow, clicking download assumes they will install it.
-        // We set the LAST_UPDATED_KEY so it doesn't spam them again until a NEW version drops.
         await DataStore.set(LAST_UPDATED_KEY, manifest.latest);
-        setIsOutdated(false);
-        setLastKnown(manifest.latest);
         VencordNative.native.openExternal(manifest.downloadUrl || "https://patchcord.itssolar.dev/download.html");
     };
 
@@ -78,7 +56,7 @@ export function UpdaterDashboard() {
             <HeadingSecondary>Version Info</HeadingSecondary>
             <Flex flexDirection="column" gap="4px" className={Margins.top8}>
                 <Paragraph>
-                    Current version: <strong>{lastKnown ?? "Unknown"}</strong>
+                    Current version: <strong>{VERSION}</strong>
                 </Paragraph>
                 <Paragraph>
                     Latest version: <strong>{manifest ? manifest.latest : isChecking ? "Checking..." : "Unknown"}</strong>
@@ -142,7 +120,6 @@ export function UpdaterDashboard() {
                             onClick={async () => {
                                 await DataStore.set(LAST_UPDATED_KEY, manifest.latest);
                                 setIsOutdated(false);
-                                setLastKnown(manifest.latest);
                             }}
                         >
                             Ignore for now
@@ -159,13 +136,13 @@ export function UpdaterDashboard() {
             <Card variant="success">
                 <HeadingSecondary>🎉 You're fully up to date!</HeadingSecondary>
                 <Paragraph className={Margins.bottom16}>
-                    You are running the latest release ({lastKnown}). We'll let you know when the next update drops.
+                    You are running the latest release ({VERSION}). We'll let you know when the next update drops.
                 </Paragraph>
                 <Button
                     look="outlined"
                     color="green"
                     disabled={isChecking}
-                    onClick={() => checkUpdates(lastKnown)}
+                    onClick={() => checkUpdates()}
                 >
                     {isChecking ? "Checking..." : "Check Again"}
                 </Button>

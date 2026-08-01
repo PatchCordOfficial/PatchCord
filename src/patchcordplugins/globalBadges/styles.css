@@ -81,28 +81,9 @@
     flex-wrap: wrap;
 }
 
-.vc-global-badges-tab-search {
+.vc-global-badges-tab-search-wrap {
     flex: 1;
     min-width: 200px;
-}
-
-/* Make the search input match the themed surfaces instead of a harsh white box */
-.vc-global-badges-tab-search input,
-.vc-global-badges-tab-search [data-mana-component="text-input"] > input,
-.vc-global-badges-tab-search [data-mana-component="text-input"] {
-    border-radius: 14px;
-    background: var(--background-secondary-alt);
-    border: 1px solid var(--border-subtle);
-    color: var(--text-normal);
-    padding: 8px 12px;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 4px 12px rgba(0, 0, 0, 0.04);
-}
-
-.vc-global-badges-tab-search [data-mana-component="text-input"]:focus-within,
-.vc-global-badges-tab-search input:focus {
-    outline: none;
-    border-color: var(--interactive-normal);
-    box-shadow: 0 0 0 1px rgba(88, 101, 242, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .vc-global-badges-tab-sort {
