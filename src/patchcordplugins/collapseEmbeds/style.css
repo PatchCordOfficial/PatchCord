@@ -1,0 +1,40 @@
+.vc-collapse-placeholder {
+    padding: 8px 12px;
+    border-left: 3px solid var(--background-modifier-accent);
+    background: var(--background-secondary);
+    border-radius: 0 4px 4px 0;
+}
+
+.vc-collapse-placeholder-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.vc-collapse-embeds-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+}
+
+.vc-collapse-embeds-btn:hover {
+    color: var(--interactive-hover);
+    background: var(--background-modifier-hover);
+}
+
+.vc-collapse-embeds-btn svg {
+    flex-shrink: 0;
+}
+
+.vc-collapse-embeds-label {
+    white-space: nowrap;
+}
