@@ -82,7 +82,10 @@ export default definePlugin({
             match(content: string) {
                 return EMOJI_REGEX.exec(content);
             },
-            parse(match: RegExpExecArray) {
+            parse(match: RegExpExecArray, _: unknown, parseProps: Record<string, any>) {
+                if (!parseProps?.messageId) {
+                    return { type: "text", content: match[0] };
+                }
                 return { type: "validEmoji", surrogate: match[0] };
             },
             react: ErrorBoundary.wrap(({ surrogate }: { surrogate: string }) => {
