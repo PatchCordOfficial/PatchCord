@@ -8,6 +8,7 @@ import "./style.css";
 
 import { addMessagePopoverButton, removeMessagePopoverButton } from "@api/MessagePopover";
 import { definePluginSettings } from "@api/Settings";
+import { ApplicationCommandOptionType, findOption, sendBotMessage } from "@api/Commands";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByPropsLazy } from "@webpack";
 import { ChannelStore, RestAPI } from "@webpack/common";
@@ -83,7 +84,33 @@ export default definePlugin({
     description: "Adds custom emoji reaction buttons to the message popover",
     authors: [{ name: "itssolar.dev", id: 864612087741546527n }],
     settings,
-    dependencies: ["MessagePopoverAPI"],
+    dependencies: ["MessagePopoverAPI", "CommandsAPI"],
+    commands: [
+        {
+            name: "CustomReact",
+            description: "Get the formatted string for the CustomReacts plugin settings",
+            options: [
+                {
+                    name: "emoji_name",
+                    description: "The emoji name (for unicode, paste the emoji itself)",
+                    type: ApplicationCommandOptionType.STRING,
+                    required: true
+                },
+                {
+                    name: "emoji_id",
+                    description: "The emoji ID (for custom emojis only)",
+                    type: ApplicationCommandOptionType.STRING,
+                    required: false
+                }
+            ],
+            execute(args, ctx) {
+                const name = findOption(args, "emoji_name", "");
+                const id = findOption(args, "emoji_id", "");
+                const result = id ? `${name}:${id}` : name;
+                sendBotMessage(ctx.channel.id, { content: `\`${result}\`` });
+            }
+        }
+    ],
     start() {
         for (const key of registered) removeMessagePopoverButton(key);
         registered.length = 0;
