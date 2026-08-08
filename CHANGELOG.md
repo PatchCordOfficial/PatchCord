@@ -1,5 +1,23 @@
 # PatchCord Changelog
 
+## PatchCord V17 (1.7.0.0) — Codebase Optimization & Stability
+
+### Highlights
+- Migrated all raw `console.log`/`console.error` calls to the structured `Logger` utility across 10+ plugins for consistent, branded logging.
+- Added `ErrorBoundary` crash isolation to 8 plugins that inject components via patches, preventing individual plugin failures from cascading.
+- Eliminated silent error swallowing in `bannersEverywhere` and `betterAudioPlayer` — caught errors are now properly logged.
+- Deduplicated a shared FFmpeg class-worker blob (~5.7 KB) that was copy-pasted across 3 plugins into a single utility module.
+
+### Fixes
+- Removed a debug `console.log(data)` in the settings import path that could log the entire user settings payload.
+- Removed stray debug `console.log("clicked")` in export messages button.
+- Fixed `guildPickerDumper` returning `console.log` instead of `return` on missing servers.
+- `clipUpload.desktop` FFmpeg worker blob now properly calls `URL.revokeObjectURL` in a finally block, fixing a memory leak retained from the other copies.
+
+### Internal
+- Created `src/utils/ffmpegWorker.ts` as the single source of truth for the FFmpeg class-worker definition.
+- All plugin logs now follow the `Logger` convention (info/warn/error/debug) rather than raw `console` calls.
+
 ## PatchCord V16 — Major UI and Cloud Update
 
 ### Highlights

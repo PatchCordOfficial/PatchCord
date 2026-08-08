@@ -7,12 +7,15 @@
 import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
+import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
+import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { ColorUtils, React, showToast, Toasts } from "@webpack/common";
 
 const cl = classNameFactory("vc-better-audio-player-");
+const logger = new Logger("BetterAudioPlayer");
 const CORS_PROXY = "https://cors.keiran0.workers.dev?url=";
 const MAX_FILE_SIZE = 12e6;
 
@@ -148,7 +151,7 @@ function Visualizer({ playerRef, src }: { playerRef: React.RefObject<HTMLAudioEl
             setupDoneRef.current = true;
 
             if (wasPlaying) {
-                audio.play().catch(() => { });
+                audio.play().catch(err => logger.warn("Audio play() failed after re-init:", err));
             }
         };
 
@@ -290,6 +293,6 @@ export default definePlugin({
 
     renderVisualizer(player: PlayerInstance) {
         if (player.props.type !== "AUDIO") return null;
-        return <Visualizer playerRef={player.mediaRef} src={player.props.src} key={player.props.src} />;
+        return <ErrorBoundary noop><Visualizer playerRef={player.mediaRef} src={player.props.src} key={player.props.src} /></ErrorBoundary>;
     },
 });

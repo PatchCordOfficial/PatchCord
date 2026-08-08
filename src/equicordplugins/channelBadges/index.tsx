@@ -6,6 +6,7 @@
 
 import "./style.css";
 
+import ErrorBoundary from "@components/ErrorBoundary";
 import { Devs, EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { Channel } from "@vencord/discord-types";
@@ -87,6 +88,6 @@ export default definePlugin({
             badges.push(renderBadge(type, returnChannelBadge(type).label));
         }
 
-        return <div className="badge-container">{badges}</div>;
+        return <ErrorBoundary noop><div className="badge-container">{badges}</div></ErrorBoundary>;
     }
 });

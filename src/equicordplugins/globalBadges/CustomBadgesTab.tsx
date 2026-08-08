@@ -13,6 +13,7 @@ import { TooltipContainer } from "@components/TooltipContainer";
 import { copyToClipboard } from "@utils/clipboard";
 import { classNameFactory } from "@utils/css";
 import { fetchUserProfile } from "@utils/discord";
+import { Logger } from "@utils/Logger";
 import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
 import { Modal, openModal, Select, TextInput, Toasts, useEffect, useMemo, UserProfileStore, UserStore, useState } from "@webpack/common";
@@ -20,6 +21,7 @@ import { Modal, openModal, Select, TextInput, Toasts, useEffect, useMemo, UserPr
 import { getGlobalBadges, getLastLoadError, loadBadges } from "./utils";
 
 const cl = classNameFactory("vc-global-badges-tab-");
+const logger = new Logger("GlobalBadges");
 
 const REQUEST_BADGE_URL = "https://patchcord.itssolar.dev/request/index.php";
 
@@ -32,12 +34,10 @@ const sortOptions: { label: string; value: SortMode; }[] = [
 ];
 
 function requestBadge() {
-    console.log("CustomBadges: requestBadge clicked", { url: REQUEST_BADGE_URL });
     VencordNative.native.openExternal(REQUEST_BADGE_URL);
 }
 
 function copyUserId(userId: string) {
-    console.log("CustomBadges: copyUserId", { userId });
     copyToClipboard(userId);
     Toasts.show({
         id: Toasts.genId(),

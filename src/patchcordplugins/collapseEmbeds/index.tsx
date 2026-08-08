@@ -8,11 +8,8 @@ import "./style.css";
 
 import { addChatBarButton, removeChatBarButton } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
-import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { React } from "@webpack/common";
-
-const logger = new Logger("CollapseEmbeds");
 
 const settings = definePluginSettings({
     collapsed: {
@@ -45,7 +42,7 @@ export default definePlugin({
     isCollapsed() {
         return settings.store.collapsed;
     },
-    renderPlaceholder(embed: any, message: any) {
+    renderPlaceholder(_embed: any, message: any) {
         return (
             <div className="vc-collapse-placeholder">
                 <span className="vc-collapse-placeholder-text">
@@ -55,8 +52,6 @@ export default definePlugin({
         );
     },
     start() {
-        logger.info("CollapseEmbeds started");
-
         addChatBarButton("CollapseEmbeds", () => {
             const collapsed = settings.use(["collapsed"]).collapsed;
 
@@ -87,7 +82,6 @@ export default definePlugin({
         ));
     },
     stop() {
-        logger.info("CollapseEmbeds stopped");
         removeChatBarButton("CollapseEmbeds");
     }
 });

@@ -6,6 +6,7 @@
 
 import "./styles.css";
 
+import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs } from "@utils/constants";
 import { getIntlMessage, openUserProfile } from "@utils/discord";
 import definePlugin from "@utils/types";
@@ -51,7 +52,7 @@ export default definePlugin({
             updateFunc(searchResults);
         }, []);
 
-        return <div className="vc-bbu-search">
+        return <ErrorBoundary noop><div className="vc-bbu-search">
             <TextInput
                 placeholder="Search users..."
                 style={{ width: "200px" }}
@@ -63,16 +64,18 @@ export default definePlugin({
                     updateFunc(searchResults);
                 }} value={value}
             />
-        </div>;
+        </div></ErrorBoundary>;
     },
     renderUser(userId: string, rest: any) {
         return (
-            <div style={{ display: "flex", gap: "8px" }}>
-                <Button color={Button.Colors.PRIMARY} onClick={() => openUserProfile(userId)}>
-                    {getIntlMessage("SHOW_USER_PROFILE")}
-                </Button>
-                {rest}
-            </div>
+            <ErrorBoundary noop>
+                <div style={{ display: "flex", gap: "8px" }}>
+                    <Button color={Button.Colors.PRIMARY} onClick={() => openUserProfile(userId)}>
+                        {getIntlMessage("SHOW_USER_PROFILE")}
+                    </Button>
+                    {rest}
+                </div>
+            </ErrorBoundary>
         );
     },
     getSearchResults() {

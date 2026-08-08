@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs } from "@utils/constants";
 import { classes } from "@utils/misc";
 import definePlugin from "@utils/types";
@@ -35,7 +36,7 @@ export default definePlugin({
 
     renderZipPreview(props: ZipPreviewAttachmentProps) {
         if (!isZipFile(getAttachmentFileName(props))) return null;
-        return <SafeZipPreviewInline {...props} />;
+        return <ErrorBoundary noop><SafeZipPreviewInline {...props} /></ErrorBoundary>;
     },
 
     fileClassName(className: string) {

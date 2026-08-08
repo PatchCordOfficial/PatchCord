@@ -7,6 +7,7 @@
 import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
+import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
 import definePlugin, { OptionType } from "@utils/types";
@@ -52,6 +53,6 @@ export default definePlugin({
         loadPresets("main");
     },
     renderPresetSection(section: PresetSection, guildId?: string) {
-        return <PresetManager section={section} guildId={guildId} />;
+        return <ErrorBoundary noop><PresetManager section={section} guildId={guildId} /></ErrorBoundary>;
     }
 });

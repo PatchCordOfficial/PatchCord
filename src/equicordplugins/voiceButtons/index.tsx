@@ -5,6 +5,7 @@
  */
 
 import { Flex } from "@components/Flex";
+import ErrorBoundary from "@components/ErrorBoundary";
 import { EquicordDevs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { User } from "@vencord/discord-types";
@@ -37,11 +38,13 @@ export default definePlugin({
             : "voice-user-buttons-left";
 
         return (
-            <Flex flexDirection="row" className={`voice-user-buttons ${positionClass}`}>
-                {settings.store.showChatButton && <UserChatButton user={user} />}
-                {settings.store.showMuteButton && <UserMuteButton user={user} />}
-                {settings.store.showDeafenButton && <UserDeafenButton user={user} />}
-            </Flex>
+            <ErrorBoundary noop>
+                <Flex flexDirection="row" className={`voice-user-buttons ${positionClass}`}>
+                    {settings.store.showChatButton && <UserChatButton user={user} />}
+                    {settings.store.showMuteButton && <UserMuteButton user={user} />}
+                    {settings.store.showDeafenButton && <UserDeafenButton user={user} />}
+                </Flex>
+            </ErrorBoundary>
         );
     }
 });

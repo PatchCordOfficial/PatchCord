@@ -6,12 +6,14 @@
 
 import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { Devs, EquicordDevs } from "@utils/constants";
+import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
 import type { Guild } from "@vencord/discord-types";
 import { EmojiStore, Menu, StickersStore } from "@webpack/common";
 import { zipSync } from "fflate";
 
 const StickerExt = [, "png", "apng", "json", "gif"] as const;
+const logger = new Logger("GuildPickerDumper");
 
 const Patch: NavContextMenuPatchCallback = (children, { guild }: { guild: Guild; }) => {
     // Assuming "privacy" is the correct ID for the group you want to modify.
@@ -34,7 +36,8 @@ async function zipGuildAssets(guild: Guild, type: "emojis" | "stickers") {
         : StickersStore.getStickersByGuildId(guild.id);
 
     if (!items) {
-        return console.log("Server not found!");
+        logger.error("Server not found for guild:", guild.id);
+        return;
     }
 
     const getProxyEndpoint = () => {

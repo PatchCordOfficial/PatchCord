@@ -6,6 +6,7 @@
 
 import "./style.css";
 
+import ErrorBoundary from "@components/ErrorBoundary";
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 
@@ -26,18 +27,20 @@ export default definePlugin({
 
     renderDownload(src: string) {
         return (
-            <a
-                className="vc-voice-download"
-                href={src}
-                onClick={e => e.stopPropagation()}
-                aria-label="Download voice message"
-                {...IS_DISCORD_DESKTOP
-                    ? { target: "_blank" } // open externally
-                    : { download: "voice-message.ogg" } // download directly (not supported on discord desktop)
-                }
-            >
-                <this.Icon />
-            </a>
+            <ErrorBoundary noop>
+                <a
+                    className="vc-voice-download"
+                    href={src}
+                    onClick={e => e.stopPropagation()}
+                    aria-label="Download voice message"
+                    {...IS_DISCORD_DESKTOP
+                        ? { target: "_blank" }
+                        : { download: "voice-message.ogg" }
+                    }
+                >
+                    <this.Icon />
+                </a>
+            </ErrorBoundary>
         );
     },
 

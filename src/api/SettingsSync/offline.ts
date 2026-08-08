@@ -63,7 +63,7 @@ export async function importSettings(data: string, type: BackupType = "all", clo
     try {
         var parsed = JSON.parse(data);
     } catch (err) {
-        console.log(data);
+        logger.error("Failed to parse settings import JSON:", err);
         throw new Error("Failed to parse JSON: " + String(err));
     }
 

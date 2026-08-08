@@ -112,7 +112,7 @@ function normalizeModDisplay(mod?: string) {
 export async function loadBadges() {
     const url = resolveBadgesUrl(settings.store.apiUrl);
 
-    console.log("CustomBadges: loadBadges start", { resolvedUrl: url });
+    const logger = new Logger("GlobalBadges");
 
     let globalBadges: { users?: Record<string, unknown>; };
     try {
@@ -120,11 +120,9 @@ export async function loadBadges() {
         // stale, conditionally-revalidated response back, which is part of
         // what caused badge changes to not show up without a full restart.
         const res = await fetch(url, { cache: "no-store" });
-        console.log("CustomBadges: fetch response", { url, status: res.status });
         if (!res.ok) throw new Error(`${url} responded with ${res.status}`);
 
         const data = await res.json();
-        console.log("CustomBadges: fetch data", { url, dataPreview: data && typeof data === "object" ? Object.keys(data).slice(0, 10) : typeof data });
 
         if (!data || typeof data !== "object") {
             throw new Error("Badge API returned invalid JSON shape");
@@ -134,7 +132,6 @@ export async function loadBadges() {
         lastLoadError = null;
     } catch (e) {
         lastLoadError = e instanceof Error ? e.message : String(e);
-        console.log("CustomBadges: loadBadges error", { url, error: lastLoadError, errorObject: e });
         new Logger("GlobalBadges").error(
             `Failed to load global badges from ${url}.`,
             e
@@ -147,7 +144,6 @@ export async function loadBadges() {
 
     if (typeof rawUsers !== "object" || Array.isArray(rawUsers)) {
         lastLoadError = "Badge API returned an invalid users object.";
-        console.log("CustomBadges: invalid users shape", { rawUsers });
         return false;
     }
 
@@ -161,7 +157,7 @@ export async function loadBadges() {
                 const mod = typeof badge.mod === "string" ? badge.mod.toLowerCase() : undefined;
 
                 if (!badgeUrl || !tooltip) {
-                    console.log("CustomBadges: skipping invalid badge entry", { userId: key, badge });
+                    logger.debug("Skipping invalid badge entry", { userId: key, badge });
                     return null;
                 }
 
@@ -187,11 +183,11 @@ export async function loadBadges() {
             .filter((badge): badge is Record<string, any> => badge !== null);
 
         if (rawBadges.length && !filteredUsers[key].length) {
-            console.log("CustomBadges: all PatchCord badges filtered out for user", { userId: key, rawBadges });
+            logger.debug("All badges filtered out for user", { userId: key, rawBadges });
         }
     }
 
-    console.log("CustomBadges: filtered badges ready", { filteredUserCount: Object.keys(filteredUsers).length });
+    logger.info("Badges loaded", { filteredUserCount: Object.keys(filteredUsers).length });
 
     GlobalBadges = filteredUsers;
 

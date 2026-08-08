@@ -1,7 +1,7 @@
 {
     "name": "Patchcord",
     "private": "true",
-    "version": "1.6.4.5",
+    "version": "1.7.0.0",
     "description": "The other other cutest Discord client mod",
     "homepage": "https://patchcord.itssolar.dev",
     "bugs": {

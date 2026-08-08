@@ -35,9 +35,10 @@ function resolveURL(surrogate: string): string | undefined {
 function EmojiImage({ surrogate }: { surrogate: string }) {
     const [broken, setBroken] = useState(false);
 
-    const wantsFallback = broken || !resolveURL(surrogate);
+    const url = resolveURL(surrogate);
+    const wantsFallback = broken || !url;
     const effective = wantsFallback ? FALLBACK_SURROGATE : surrogate;
-    const src = resolveURL(effective);
+    const src = wantsFallback ? resolveURL(FALLBACK_SURROGATE) : url;
     const name = EmojiParser.convertSurrogateToName(effective);
 
     return (

@@ -9,6 +9,7 @@ import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings } from "@api/Settings";
 import usrbg from "@plugins/usrbg";
 import { Devs } from "@utils/constants";
+import { Logger } from "@utils/Logger";
 import definePlugin, { OptionType } from "@utils/types";
 import { User } from "@vencord/discord-types";
 import { UserProfileStore } from "@webpack/common";
@@ -39,6 +40,7 @@ const settings = definePluginSettings({
 });
 
 const DATASTORE_KEY = "bannersEverywhere";
+const logger = new Logger("BannersEverywhere");
 
 export default definePlugin({
     name: "BannersEverywhere",
@@ -101,7 +103,7 @@ export default definePlugin({
                         imgElement.src = pngUrl;
                     }
                 })
-                .catch();
+                .catch(err => logger.error("Failed to convert GIF to PNG:", err));
         }
 
         return (
