@@ -9,3 +9,27 @@
     font-size: 18px;
     line-height: 22px;
 }
+
+/* Only the native "quick react" emoji shortcut buttons get this class
+   (matched by aria-label in JS) - Reply, Add Reaction, More, Translate,
+   etc. are never touched. */
+.vc-customreacts-hide-native {
+    display: none !important;
+}
+
+/* Discord sizes the button row/its wrapper for its own fixed, small button
+   count. With more custom buttons than that, let the row wrap onto extra
+   lines instead of clipping, and let its parent grow to fit - so nothing
+   (native or custom) gets cut off no matter how many reacts are added. */
+.vc-customreacts-row-flex {
+    flex-wrap: wrap !important;
+    max-width: none !important;
+    row-gap: 4px;
+}
+
+.vc-customreacts-row-parent {
+    overflow: visible !important;
+    max-width: none !important;
+    width: auto !important;
+    height: auto !important;
+}
