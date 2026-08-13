@@ -44,13 +44,18 @@ type KeysOfType<Object, Type> = {
 }[keyof Object];
 
 function Switches() {
-    const settings = useSettings(["useQuickCss", "enableReactDevtools", "mainWindowFrameless", "frameless", "winNativeTitleBar", "transparent", "winCtrlQ", "disableMinSize"]);
+    const settings = useSettings(["useQuickCss", "enableReactDevtools", "mainWindowFrameless", "frameless", "winNativeTitleBar", "transparent", "winCtrlQ", "disableMinSize", "customSplashScreen"]);
 
     const Switches = [
         {
             key: "useQuickCss",
             title: "Enable Custom CSS",
             description: "Load custom CSS from the QuickCSS editor. This allows you to customize Discord's appearance with your own styles.",
+        },
+        IS_DISCORD_DESKTOP && {
+            key: "customSplashScreen",
+            title: "Custom Startup Animation",
+            description: "Show PatchCord's own animated splash screen on startup instead of Discord's, and check for updates while it loads.",
         },
         !IS_WEB && {
             key: "enableReactDevtools",

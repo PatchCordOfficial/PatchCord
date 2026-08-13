@@ -56,6 +56,7 @@ export interface Settings {
     frameless: boolean;
     transparent: boolean;
     winCtrlQ: boolean;
+    customSplashScreen: boolean;
     macosVibrancyStyle:
     | "content"
     | "fullscreen-ui"
@@ -120,6 +121,7 @@ const DefaultSettings: Settings = {
     frameless: false,
     transparent: false,
     winCtrlQ: false,
+    customSplashScreen: true,
     macosVibrancyStyle: undefined,
     windowsMaterial: "none",
     disableMinSize: false,

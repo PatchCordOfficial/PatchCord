@@ -44,9 +44,13 @@ import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManage
 import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
 import { areLocalSettingsDirty, getCloudSettings, getCloudSyncDirection, markLocalSettingsDirty, putCloudSettings, shouldCloudSync } from "./api/SettingsSync/cloudSync";
 import { relaunch } from "./utils/native";
+import { hideSplashScreen, showSplashScreen } from "./utils/splashScreen";
 import { checkForUpdates, isOutdated as getIsOutdated, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
 import { patches } from "./webpack/patchWebpack";
+
+// Show our custom startup animation immediately, before Discord gets a chance to paint anything
+showSplashScreen();
 
 if (IS_REPORTER) {
     require("./debug/runReporter");
@@ -201,6 +205,9 @@ function initTrayIpc() {
 async function init() {
     await onceReady;
     startAllPlugins(StartAt.WebpackReady);
+
+    // Discord's own UI is about to take over from here, so our splash screen has done its job
+    hideSplashScreen();
 
     syncSettings();
     initTrayIpc();
