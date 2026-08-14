@@ -16,13 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { isPluginEnabled, plugins } from "@api/PluginManager";
 import { PlainSettings, Settings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
 import { checkForUpdates, updateError } from "@utils/updater";
 
 import gitHash from "~git-hash";
 
-const SplashLogger = /* #__PURE__*/ new Logger("SplashScreen", "#5865F2");
+const SplashLogger = /* #__PURE__*/ new Logger("SplashScreen", "#9096a0");
 
 const LOGO_URL = "http://patchcord.itssolar.dev/logo.png";
 const LOGO_MAX_WIDTH = 176;
@@ -53,15 +54,34 @@ const TIPS = [
     "PatchCord checks your current version against the latest one on every launch.",
 ];
 
-const BOOT_STAGES = [
+interface BootStage {
+    label: string | (() => string);
+    icon: string;
+}
+
+// Counts plugins the same way the Plugins settings tab does, so the number
+// shown here always matches what the user would see there.
+function getPluginCountLabel() {
+    try {
+        const names = Object.keys(plugins);
+        const enabledCount = names.filter(isPluginEnabled).length;
+        if (!enabledCount) return "Preparing plugins…";
+        return `Preparing ${enabledCount} plugin${enabledCount === 1 ? "" : "s"}…`;
+    } catch (err) {
+        SplashLogger.debug("Couldn't count plugins", err);
+        return "Preparing plugins…";
+    }
+}
+
+const BOOT_STAGES: BootStage[] = [
     { label: "Starting PatchCord…", icon: "power" },
     { label: "Getting system started…", icon: "cpu" },
     { label: "Loading your settings…", icon: "gear" },
     { label: "Initializing patches…", icon: "puzzle" },
-    { label: "Preparing plugins…", icon: "plug" },
+    { label: getPluginCountLabel, icon: "plug" },
     { label: "Warming up the cache…", icon: "database" },
     { label: "Connecting to Discord…", icon: "link" },
-] as const;
+];
 
 const UPDATE_STAGES = {
     checkingCurrent: { label: "Checking current version…", icon: "tag" },
@@ -114,6 +134,9 @@ let barFillEl: HTMLElement | null = null;
 let percentEl: HTMLElement | null = null;
 let soundBtnEl: HTMLElement | null = null;
 let volumeSliderEl: HTMLInputElement | null = null;
+let errorToggleEl: HTMLElement | null = null;
+let errorDetailsEl: HTMLElement | null = null;
+let errorDetailsExpanded = false;
 let shownAt = 0;
 let removed = false;
 let resolveRemoved: (() => void) | null = null;
@@ -381,7 +404,8 @@ function playBootSequence(onDone: () => void) {
         }
 
         const stage = BOOT_STAGES[step];
-        setStatus(stage.label, stage.icon);
+        const label = typeof stage.label === "function" ? stage.label() : stage.label;
+        setStatus(label, stage.icon);
         setProgress((step + 1) / TOTAL_STEPS);
         step++;
         stageTimeout = setTimeout(next, STAGE_MS);
@@ -402,8 +426,19 @@ function applyLogoScale(img: HTMLImageElement) {
     if (!w || !h) return;
 
     const scale = Math.min(LOGO_MAX_WIDTH / w, LOGO_MAX_HEIGHT / h, 1);
-    img.style.width = `${w * scale}px`;
-    img.style.height = `${h * scale}px`;
+    const displayWidth = w * scale;
+    const displayHeight = h * scale;
+    img.style.width = `${displayWidth}px`;
+    img.style.height = `${displayHeight}px`;
+
+    // Size the glow/rings to the logo's actual rendered box (which may be
+    // wide, tall, or square) instead of assuming a fixed square/circle, so
+    // they always wrap the artwork instead of clipping through it.
+    const wrap = img.closest<HTMLElement>(".vc-splash-logo-wrap");
+    if (wrap) {
+        wrap.style.setProperty("--vc-logo-w", `${displayWidth}px`);
+        wrap.style.setProperty("--vc-logo-h", `${displayHeight}px`);
+    }
 }
 
 function buildParticles() {
@@ -457,8 +492,8 @@ function build() {
             align-items: center;
             justify-content: center;
             background:
-                radial-gradient(circle at 20% 15%, rgba(88, 101, 242, 0.16) 0%, transparent 45%),
-                radial-gradient(circle at 82% 85%, rgba(88, 101, 242, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.07) 0%, transparent 45%),
+                radial-gradient(circle at 82% 85%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
                 radial-gradient(circle at 50% 35%, #1c1e24 0%, #101216 55%, #08090b 100%);
             background-size: 200% 200%, 200% 200%, 100% 100%;
             animation: vc-splash-bg-drift 14s ease-in-out infinite;
@@ -488,7 +523,7 @@ function build() {
             position: absolute;
             bottom: -10px;
             border-radius: 50%;
-            background: rgba(185, 192, 255, 0.35);
+            background: rgba(255, 255, 255, 0.35);
             animation-name: vc-splash-particle-rise;
             animation-timing-function: ease-in;
             animation-iteration-count: infinite;
@@ -525,7 +560,7 @@ function build() {
             transition: background 150ms ease, color 150ms ease, transform 150ms ease;
         }
         .vc-splash-sound-toggle:hover {
-            background: rgba(88, 101, 242, 0.25);
+            background: rgba(255, 255, 255, 0.14);
             color: #f5f6f8;
             transform: scale(1.08);
         }
@@ -538,7 +573,7 @@ function build() {
             width: 70px;
             height: 3px;
             border-radius: 2px;
-            background: linear-gradient(90deg, #5865F2 var(--vc-vol, 50%), #363940 var(--vc-vol, 50%));
+            background: linear-gradient(90deg, #d6d9de var(--vc-vol, 50%), #363940 var(--vc-vol, 50%));
             cursor: pointer;
         }
         .vc-splash-volume-slider::-webkit-slider-thumb {
@@ -565,21 +600,37 @@ function build() {
             justify-content: center;
             margin-bottom: 24px;
             min-height: ${LOGO_MAX_HEIGHT}px;
+            --vc-logo-w: ${LOGO_MAX_WIDTH}px;
+            --vc-logo-h: ${LOGO_MAX_HEIGHT}px;
+        }
+        .vc-splash-logo-glow {
+            position: absolute;
+            width: calc(var(--vc-logo-w) + 70px);
+            height: calc(var(--vc-logo-h) + 70px);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 72%);
+            filter: blur(2px);
+            animation: vc-splash-glow-breathe 3.2s ease-in-out infinite;
+        }
+        @keyframes vc-splash-glow-breathe {
+            0%, 100% { transform: scale(0.94); opacity: 0.7; }
+            50% { transform: scale(1.06); opacity: 1; }
         }
         .vc-splash-logo-ring {
             position: absolute;
-            width: ${LOGO_MAX_HEIGHT + 40}px;
-            height: ${LOGO_MAX_HEIGHT + 40}px;
+            width: calc(var(--vc-logo-w) + 44px);
+            height: calc(var(--vc-logo-h) + 44px);
             border-radius: 50%;
-            border: 1px solid rgba(88, 101, 242, 0.35);
-            animation: vc-splash-ring-pulse 2.4s ease-out infinite;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            animation: vc-splash-ring-pulse 2.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
         }
         .vc-splash-logo-ring.vc-splash-ring-delay {
-            animation-delay: 1.2s;
+            animation-delay: 1.4s;
         }
         @keyframes vc-splash-ring-pulse {
-            0% { transform: scale(0.7); opacity: 0.7; }
-            100% { transform: scale(1.25); opacity: 0; }
+            0% { transform: scale(0.82); opacity: 0.6; }
+            70% { opacity: 0.18; }
+            100% { transform: scale(1.32); opacity: 0; }
         }
         .vc-splash-logo {
             position: relative;
@@ -588,23 +639,24 @@ function build() {
             width: auto;
             height: auto;
             opacity: 0;
-            filter: drop-shadow(0 0 22px rgba(88, 101, 242, 0.45));
-            animation: vc-splash-logo-float 2.6s ease-in-out infinite, vc-splash-logo-in 500ms ease forwards;
+            filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.3));
+            animation: vc-splash-logo-float 3.4s ease-in-out infinite, vc-splash-logo-in 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         @keyframes vc-splash-logo-in {
-            from { opacity: 0; transform: scale(0.9) translateY(6px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            0% { opacity: 0; transform: scale(0.85) translateY(10px); filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0)); }
+            60% { opacity: 1; transform: scale(1.03) translateY(-2px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.3)); }
         }
         @keyframes vc-splash-logo-float {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
+            50% { transform: translateY(-5px); }
         }
         .vc-splash-title {
             font-size: 22px;
             font-weight: 600;
             letter-spacing: .3px;
             margin-bottom: 6px;
-            background: linear-gradient(90deg, #f5f6f8, #b9c0ff, #f5f6f8);
+            background: linear-gradient(90deg, #f5f6f8, #9096a0, #f5f6f8);
             background-size: 200% auto;
             -webkit-background-clip: text;
             background-clip: text;
@@ -639,7 +691,7 @@ function build() {
             width: 0%;
             height: 100%;
             border-radius: 2px;
-            background: linear-gradient(90deg, #5865F2, #b9c0ff, #5865F2);
+            background: linear-gradient(90deg, #d6d9de, #f5f6f8, #d6d9de);
             background-size: 200% auto;
             transition: width 350ms ease;
             animation: vc-splash-bar-shine 2s linear infinite;
@@ -663,7 +715,7 @@ function build() {
         }
         .vc-splash-status-icon {
             display: flex;
-            color: #7d8cff;
+            color: #d6d9de;
             transition: opacity ${STATUS_FADE_MS}ms ease, color 150ms ease;
         }
         .vc-splash-status {
@@ -679,6 +731,48 @@ function build() {
         }
         .vc-splash-status-icon.vc-splash-status-warn {
             color: #f0b232;
+        }
+        .vc-splash-error-toggle {
+            display: none;
+            font-size: 11px;
+            color: #9096a0;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            -webkit-app-region: no-drag;
+        }
+        .vc-splash-error-toggle:hover {
+            color: #f5f6f8;
+        }
+        .vc-splash-error-toggle.vc-splash-error-toggle-visible {
+            display: inline-block;
+        }
+        .vc-splash-error-details {
+            width: min(460px, 80vw);
+            max-height: 0;
+            margin: 0 0 14px 0;
+            padding: 0 12px;
+            border-radius: 6px;
+            background: #0c0d10;
+            border: 1px solid transparent;
+            color: #f0b232;
+            font-family: "gg mono", "SFMono-Regular", Consolas, monospace;
+            font-size: 11px;
+            line-height: 1.5;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow: hidden auto;
+            opacity: 0;
+            transition: max-height 220ms ease, opacity 220ms ease, padding 220ms ease;
+            -webkit-app-region: no-drag;
+        }
+        .vc-splash-error-details.vc-splash-error-details-open {
+            max-height: 120px;
+            padding: 10px 12px;
+            border-color: rgba(240, 178, 50, 0.25);
+            opacity: 1;
         }
         .vc-splash-tip-box {
             position: absolute;
@@ -719,6 +813,7 @@ function build() {
             <input class="vc-splash-volume-slider" id="vc-splash-volume" type="range" min="0" max="100" value="50" aria-label="Startup sound volume" />
         </div>
         <div class="vc-splash-logo-wrap">
+            <div class="vc-splash-logo-glow"></div>
             <div class="vc-splash-logo-ring"></div>
             <div class="vc-splash-logo-ring vc-splash-ring-delay"></div>
             <img class="vc-splash-logo" alt="PatchCord" />
@@ -733,6 +828,8 @@ function build() {
             <span class="vc-splash-status-icon" id="vc-splash-status-icon">${icon("power", 14)}</span>
             <span class="vc-splash-status" id="vc-splash-status"></span>
         </div>
+        <span class="vc-splash-error-toggle" id="vc-splash-error-toggle" role="button">Show details</span>
+        <pre class="vc-splash-error-details" id="vc-splash-error-details"></pre>
         <div class="vc-splash-tip-box">
             <div class="vc-splash-tip-label">${icon("gear", 12)}DID YOU KNOW</div>
             <div class="vc-splash-tip-text">${TIPS[Math.floor(Math.random() * TIPS.length)]}</div>
@@ -746,6 +843,11 @@ function build() {
     percentEl = el.querySelector("#vc-splash-percent");
     soundBtnEl = el.querySelector("#vc-splash-sound");
     volumeSliderEl = el.querySelector("#vc-splash-volume");
+    errorToggleEl = el.querySelector("#vc-splash-error-toggle");
+    errorDetailsEl = el.querySelector("#vc-splash-error-details");
+    errorDetailsExpanded = false;
+
+    errorToggleEl?.addEventListener("click", toggleErrorDetails);
 
     const initialVolume = PlainSettings.splashScreenSound === false
         ? 0
@@ -803,6 +905,43 @@ function setStatusTone(tone: "success" | "warn" | null) {
     statusIconEl.classList.toggle("vc-splash-status-warn", tone === "warn");
 }
 
+function formatErrorDetail(err: unknown) {
+    if (err == null) return "No further details were captured.";
+    if (err instanceof Error) return err.stack || `${err.name}: ${err.message}`;
+    if (typeof err === "string") return err;
+    try {
+        return JSON.stringify(err, null, 2);
+    } catch {
+        return String(err);
+    }
+}
+
+// Surfaces a "Show details" toggle next to the status line when a boot stage
+// fails, so people can grab the real error for a bug report without the
+// splash screen being cluttered by default.
+function showErrorDetails(err: unknown) {
+    if (!errorToggleEl || !errorDetailsEl) return;
+    errorDetailsEl.textContent = formatErrorDetail(err);
+    errorToggleEl.classList.add("vc-splash-error-toggle-visible");
+    errorDetailsExpanded = false;
+    errorDetailsEl.classList.remove("vc-splash-error-details-open");
+    errorToggleEl.textContent = "Show details";
+}
+
+function hideErrorDetails() {
+    if (!errorToggleEl || !errorDetailsEl) return;
+    errorToggleEl.classList.remove("vc-splash-error-toggle-visible");
+    errorDetailsEl.classList.remove("vc-splash-error-details-open");
+    errorDetailsExpanded = false;
+}
+
+function toggleErrorDetails() {
+    if (!errorDetailsEl || !errorToggleEl) return;
+    errorDetailsExpanded = !errorDetailsExpanded;
+    errorDetailsEl.classList.toggle("vc-splash-error-details-open", errorDetailsExpanded);
+    errorToggleEl.textContent = errorDetailsExpanded ? "Hide details" : "Show details";
+}
+
 async function runUpdateCheck() {
     if (IS_UPDATER_DISABLED) {
         setStatus(UPDATE_RESULT_MESSAGES.disabled, "warn");
@@ -811,6 +950,7 @@ async function runUpdateCheck() {
         return;
     }
 
+    hideErrorDetails();
     setStatus(UPDATE_STAGES.checkingCurrent.label, UPDATE_STAGES.checkingCurrent.icon);
     setProgress((BOOT_STAGES.length + 1) / TOTAL_STEPS);
 
@@ -839,6 +979,7 @@ async function runUpdateCheck() {
         SplashLogger.error("Failed to check for updates", err, updateError);
         setStatus(UPDATE_RESULT_MESSAGES.failed, "warn");
         setStatusTone("warn");
+        showErrorDetails(err ?? updateError);
         playErrorChime();
     }
 }
@@ -892,6 +1033,8 @@ export function hideSplashScreen() {
                 percentEl = null;
                 soundBtnEl = null;
                 volumeSliderEl = null;
+                errorToggleEl = null;
+                errorDetailsEl = null;
                 audioCtx?.close().catch(() => {});
                 audioCtx = null;
                 resolveRemoved?.();

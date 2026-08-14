@@ -57,6 +57,8 @@ export interface Settings {
     transparent: boolean;
     winCtrlQ: boolean;
     customSplashScreen: boolean;
+    splashScreenSound: boolean;
+    splashScreenVolume: number;
     macosVibrancyStyle:
     | "content"
     | "fullscreen-ui"
@@ -122,6 +124,8 @@ const DefaultSettings: Settings = {
     transparent: false,
     winCtrlQ: false,
     customSplashScreen: true,
+    splashScreenSound: true,
+    splashScreenVolume: 0.5,
     macosVibrancyStyle: undefined,
     windowsMaterial: "none",
     disableMinSize: false,
