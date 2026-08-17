@@ -71,7 +71,8 @@ async function sendPresencePing() {
                 user_id: user.id,
                 username: user.globalName || user.username,
                 avatar: user.getAvatarURL ? user.getAvatarURL(undefined, 128, true) : null,
-                status: getLocalStatus()
+                status: getLocalStatus(),
+                version: VERSION
             })
         });
 
@@ -95,6 +96,7 @@ export interface OnlineUser {
     avatar: string | null;
     status: UserPresenceStatus;
     last_seen?: number;
+    version?: string;
 }
 
 export interface OnlineUsersPage {
@@ -124,7 +126,8 @@ export async function fetchOnlineUsers(page: number, search: string): Promise<On
                 username: u.username,
                 avatar: u.avatar ?? null,
                 status: (u.status === "idle" || u.status === "dnd" || u.status === "offline") ? u.status : "online",
-                last_seen: u.last_seen
+                last_seen: u.last_seen,
+                version: u.version
             })),
             total: data.total ?? data.users.length,
             page: data.page ?? page,

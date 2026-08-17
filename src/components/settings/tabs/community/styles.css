@@ -225,6 +225,11 @@
     font-family: var(--font-code);
 }
 
+.vc-community-version {
+    font-size: 0.75em;
+    color: var(--text-muted);
+}
+
 .vc-community-empty {
     opacity: 0.6;
     padding: 1em 0;

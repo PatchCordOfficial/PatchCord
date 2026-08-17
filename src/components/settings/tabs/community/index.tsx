@@ -77,6 +77,7 @@ function UserRow({ user, index }: { user: OnlineUser; index: number; }) {
             <div className={cl("user-meta")}>
                 <span className={cl("username")}>{user.username}</span>
                 <span className={cl("userid")}>{user.user_id}</span>
+                {user.version && <span className={cl("version")}>v{user.version}</span>}
             </div>
             <span className={cl("status-pill")} style={{ color: meta.color, borderColor: meta.color }}>{meta.label}</span>
         </Card>
