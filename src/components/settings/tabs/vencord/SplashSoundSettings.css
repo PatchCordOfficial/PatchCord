@@ -1,0 +1,125 @@
+.vc-splash-sound-settings-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vc-splash-sound-settings-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.vc-splash-sound-settings-track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vc-splash-sound-settings-art {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--background-secondary);
+}
+
+.vc-splash-sound-settings-track-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.vc-splash-sound-settings-track-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary, #f5f6f8);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vc-splash-sound-settings-track-artist {
+    font-size: 12px;
+    color: var(--text-muted, #9096a0);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.vc-splash-sound-settings-scrubber-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vc-splash-sound-settings-scrubber {
+    flex: 1;
+    height: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--background-modifier-accent, #3a3d44);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.vc-splash-sound-settings-scrubber::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-primary, #f5f6f8);
+    cursor: pointer;
+}
+
+.vc-splash-sound-settings-scrubber::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-primary, #f5f6f8);
+    border: none;
+    cursor: pointer;
+}
+
+.vc-splash-sound-settings-time {
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted, #9096a0);
+    width: 34px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.vc-splash-sound-settings-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.vc-splash-sound-settings-control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.vc-splash-sound-settings-control-btn-main {
+    width: 40px;
+    height: 40px;
+}
+
+.vc-splash-sound-settings-footer-row {
+    display: flex;
+    gap: 8px;
+}
+
+.vc-splash-sound-settings-file-input {
+    display: none;
+}

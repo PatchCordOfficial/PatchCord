@@ -1012,6 +1012,76 @@ export function AttachmentIcon(props: IconProps) {
     );
 }
 
+export function PlayIcon(props: IconProps) {
+    return (
+        <Icon
+            {...props}
+            viewBox="0 0 24 24"
+        >
+            <path
+                fill={props.fill || "currentColor"}
+                d="M8 5.14v13.72c0 .8.87 1.29 1.55.87l10.9-6.86a1 1 0 0 0 0-1.74L9.55 4.27C8.87 3.85 8 4.34 8 5.14Z"
+            />
+        </Icon>
+    );
+}
+
+export function PauseIcon(props: IconProps) {
+    return (
+        <Icon
+            {...props}
+            viewBox="0 0 24 24"
+        >
+            <path
+                fill={props.fill || "currentColor"}
+                d="M8 5a1.5 1.5 0 0 0-1.5 1.5v11a1.5 1.5 0 0 0 3 0v-11A1.5 1.5 0 0 0 8 5Zm8 0a1.5 1.5 0 0 0-1.5 1.5v11a1.5 1.5 0 0 0 3 0v-11A1.5 1.5 0 0 0 16 5Z"
+            />
+        </Icon>
+    );
+}
+
+export function SkipBackIcon(props: IconProps) {
+    return (
+        <Icon
+            {...props}
+            viewBox="0 0 24 24"
+        >
+            <path
+                fill={props.fill || "currentColor"}
+                d="M7 5.5a1 1 0 0 0-2 0v13a1 1 0 1 0 2 0v-13Zm2.98 6.15 9.4-6.61c.65-.46 1.62.02 1.62.87v13.18c0 .85-.97 1.33-1.62.87l-9.4-6.61a1 1 0 0 1 0-1.7Z"
+            />
+        </Icon>
+    );
+}
+
+export function SkipForwardIcon(props: IconProps) {
+    return (
+        <Icon
+            {...props}
+            viewBox="0 0 24 24"
+        >
+            <path
+                fill={props.fill || "currentColor"}
+                d="M17 5.5a1 1 0 0 1 2 0v13a1 1 0 1 1-2 0v-13Zm-2.98 6.15-9.4-6.61C3.97 4.58 3 5.06 3 5.91v13.18c0 .85.97 1.33 1.62.87l9.4-6.61a1 1 0 0 0 0-1.7Z"
+            />
+        </Icon>
+    );
+}
+
+export function ReplayIcon(props: IconProps) {
+    return (
+        <Icon
+            {...props}
+            viewBox="0 0 24 24"
+        >
+            <path
+                fill={props.fill || "currentColor"}
+                d="M12 4a8 8 0 1 1-7.75 6 1 1 0 1 1 1.94.49A6 6 0 1 0 12 6a5.96 5.96 0 0 0-4.24 1.76l1.42 1.42A.5.5 0 0 1 8.82 10H4.5a.5.5 0 0 1-.5-.5V5.18a.5.5 0 0 1 .85-.36l1.34 1.34A8 8 0 0 1 12 4Z"
+            />
+        </Icon>
+    );
+}
+
 export function StickerIcon(props: IconProps) {
     return (
         <Icon

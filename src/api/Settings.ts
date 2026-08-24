@@ -59,6 +59,8 @@ export interface Settings {
     customSplashScreen: boolean;
     splashScreenSound: boolean;
     splashScreenVolume: number;
+    /** Whether to play the user-uploaded custom audio pack on startup instead of the built-in chime. */
+    splashScreenUseCustomAudio: boolean;
     macosVibrancyStyle:
     | "content"
     | "fullscreen-ui"
@@ -126,6 +128,7 @@ const DefaultSettings: Settings = {
     customSplashScreen: true,
     splashScreenSound: true,
     splashScreenVolume: 0.5,
+    splashScreenUseCustomAudio: false,
     macosVibrancyStyle: undefined,
     windowsMaterial: "none",
     disableMinSize: false,

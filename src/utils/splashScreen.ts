@@ -19,6 +19,7 @@
 import { isPluginEnabled, plugins } from "@api/PluginManager";
 import { PlainSettings, Settings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
+import { getSplashAudio, SplashCustomAudio } from "@utils/splashCustomAudio";
 import { checkForUpdates, updateError } from "@utils/updater";
 
 import gitHash from "~git-hash";
@@ -124,7 +125,8 @@ const MAX_VISIBLE_MS = 15_000;
 const FADE_MS = 400;
 const STAGE_MS = 1000;
 const STATUS_FADE_MS = 160;
-const PARTICLE_COUNT = 22;
+// Fewer, cheaper particles: transform/opacity-only animation, GPU composited.
+const PARTICLE_COUNT = 12;
 
 let root: HTMLElement | null = null;
 let hideDiscordStyle: HTMLStyleElement | null = null;
@@ -145,6 +147,8 @@ let statusFadeTimeout: ReturnType<typeof setTimeout> | null = null;
 let audioCtx: AudioContext | null = null;
 let volume = 0.5;
 let volumeBeforeMute = 0.5;
+let customAudioEl: HTMLAudioElement | null = null;
+let usingCustomBootAudio = false;
 
 export function shouldShowSplashScreen() {
     return (
@@ -166,42 +170,53 @@ function ensureAudioCtx() {
     return audioCtx;
 }
 
-function playTone(freqs: number[], duration = 0.16, gapMs = 90) {
+// Softer, rounder envelope than a typical UI beep: a slower attack, a gentle
+// lowpass to take the edge off the sine's upper harmonics, and a longer
+// release so notes melt into each other instead of poking out.
+function playTone(freqs: number[], duration = 0.32, gapMs = 130) {
     if (volume <= 0) return;
 
     try {
         const ctx = ensureAudioCtx();
         if (!ctx) return;
 
-        const peak = 0.09 * volume;
+        const peak = 0.055 * volume;
 
         freqs.forEach((freq, i) => {
             const start = ctx.currentTime + (i * gapMs) / 1000;
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
+            const filter = ctx.createBiquadFilter();
+
+            filter.type = "lowpass";
+            filter.frequency.value = 1600;
+            filter.Q.value = 0.3;
 
             osc.type = "sine";
             osc.frequency.setValueAtTime(freq, start);
             gain.gain.setValueAtTime(0, start);
-            gain.gain.linearRampToValueAtTime(peak, start + 0.015);
+            gain.gain.linearRampToValueAtTime(peak, start + 0.05);
             gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
 
-            osc.connect(gain);
+            osc.connect(filter);
+            filter.connect(gain);
             gain.connect(ctx.destination);
             osc.start(start);
-            osc.stop(start + duration + 0.02);
+            osc.stop(start + duration + 0.05);
         });
     } catch (err) {
         SplashLogger.debug("Couldn't play splash sound", err);
     }
 }
 
-const playBootChime = () => playTone([392, 523.25]);
-const playReadyChime = () => playTone([523.25, 659.25, 783.99], 0.2, 100);
-const playErrorChime = () => playTone([293.66, 233.08], 0.22, 110);
+// A gentle two-note rise instead of a bright power chord, and slower, softer
+// resolution/error cues so nothing feels like an alarm.
+const playBootChime = () => playTone([349.23, 440], 0.34, 150);
+const playReadyChime = () => playTone([440, 523.25, 587.33], 0.3, 140);
+const playErrorChime = () => playTone([293.66, 261.63], 0.32, 150);
 
-const HUM_FADE_S = 0.6;
-const HUM_PEAK_GAIN = 0.022;
+const HUM_FADE_S = 0.8;
+const HUM_PEAK_GAIN = 0.014;
 
 interface HumNodes {
     oscRoot: OscillatorNode;
@@ -333,6 +348,52 @@ function stopAmbientHum(fadeSeconds = HUM_FADE_S) {
     }, fadeSeconds * 1000 + 60);
 }
 
+// Plays the user's uploaded startup track instead of the synthesized chime +
+// hum, if one is set and enabled. Resolves false (and does nothing) whenever
+// anything about the custom track can't be used, so the caller can silently
+// fall back to the built-in sound instead of showing a broken player.
+async function tryPlayCustomBootAudio(): Promise<boolean> {
+    if (volume <= 0 || PlainSettings.splashScreenUseCustomAudio === false) return false;
+
+    let stored: SplashCustomAudio | undefined;
+    try {
+        stored = await getSplashAudio();
+    } catch (err) {
+        SplashLogger.debug("Couldn't load custom boot audio", err);
+        return false;
+    }
+
+    if (!stored?.dataUri || removed) return false;
+
+    try {
+        const el = new Audio(stored.dataUri);
+        el.volume = Math.max(0, Math.min(1, volume));
+        el.addEventListener("ended", () => {
+            if (customAudioEl === el) customAudioEl = null;
+        });
+
+        await el.play();
+
+        if (removed) {
+            el.pause();
+            return false;
+        }
+
+        customAudioEl = el;
+        usingCustomBootAudio = true;
+        return true;
+    } catch (err) {
+        SplashLogger.debug("Couldn't play custom boot audio, falling back", err);
+        return false;
+    }
+}
+
+function stopCustomBootAudio() {
+    customAudioEl?.pause();
+    customAudioEl = null;
+    usingCustomBootAudio = false;
+}
+
 function volumeIconName() {
     if (volume <= 0) return "speakerMute";
     return volume < 0.5 ? "speakerLow" : "speakerHigh";
@@ -356,7 +417,9 @@ function setVolume(next: number, persist = true) {
         volumeSliderEl.style.setProperty("--vc-vol", `${pct}%`);
     }
 
-    if (!removed) {
+    if (customAudioEl) customAudioEl.volume = volume;
+
+    if (!removed && !usingCustomBootAudio) {
         if (volume > 0 && !wasAudible) startAmbientHum();
         else if (volume <= 0 && wasAudible) stopAmbientHum(0.15);
         else updateHumVolume();
@@ -491,12 +554,7 @@ function build() {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background:
-                radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.07) 0%, transparent 45%),
-                radial-gradient(circle at 82% 85%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 50% 35%, #1c1e24 0%, #101216 55%, #08090b 100%);
-            background-size: 200% 200%, 200% 200%, 100% 100%;
-            animation: vc-splash-bg-drift 14s ease-in-out infinite;
+            background: radial-gradient(circle at 50% 35%, #1c1e24 0%, #101216 55%, #08090b 100%);
             color: #f5f6f8;
             font-family: "gg sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
             opacity: 1;
@@ -504,20 +562,48 @@ function build() {
             user-select: none;
             -webkit-app-region: drag;
             overflow: hidden;
+            /* Isolate our own paints/layout from the rest of the (hidden) document. */
+            contain: layout style paint;
         }
         #vc-splash-root.vc-splash-hidden {
             opacity: 0;
             pointer-events: none;
         }
+        /* Cheap ambient motion: a single oversized gradient layer nudged with
+           transforms only, never background-position (which forces a full
+           repaint of the gradient every frame and was the main source of the
+           low framerate on this screen). */
+        #vc-splash-root::before {
+            content: "";
+            position: absolute;
+            inset: -20%;
+            background:
+                radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.065) 0%, transparent 45%),
+                radial-gradient(circle at 78% 82%, rgba(255, 255, 255, 0.045) 0%, transparent 50%);
+            animation: vc-splash-bg-drift 20s ease-in-out infinite;
+            will-change: transform;
+            pointer-events: none;
+        }
         @keyframes vc-splash-bg-drift {
-            0%, 100% { background-position: 0% 0%, 100% 100%, 0 0; }
-            50% { background-position: 20% 10%, 80% 90%, 0 0; }
+            0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+            50% { transform: translate3d(1.5%, -1.5%, 0) scale(1.04); }
+        }
+        .vc-splash-main {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 640px;
+            padding: 0 24px;
+            box-sizing: border-box;
         }
         .vc-splash-particles {
             position: absolute;
             inset: 0;
             overflow: hidden;
             pointer-events: none;
+            contain: layout style paint;
         }
         .vc-splash-particle {
             position: absolute;
@@ -527,12 +613,14 @@ function build() {
             animation-name: vc-splash-particle-rise;
             animation-timing-function: ease-in;
             animation-iteration-count: infinite;
+            will-change: transform, opacity;
+            backface-visibility: hidden;
         }
         @keyframes vc-splash-particle-rise {
-            0% { transform: translate(0, 0); opacity: 0; }
+            0% { transform: translate3d(0, 0, 0); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: .6; }
-            100% { transform: translate(var(--vc-drift), -110vh); opacity: 0; }
+            100% { transform: translate3d(var(--vc-drift), -110vh, 0); opacity: 0; }
         }
         .vc-splash-sound-cluster {
             position: absolute;
@@ -608,29 +696,39 @@ function build() {
             width: calc(var(--vc-logo-w) + 70px);
             height: calc(var(--vc-logo-h) + 70px);
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 72%);
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.045) 45%, transparent 72%);
             filter: blur(2px);
-            animation: vc-splash-glow-breathe 3.2s ease-in-out infinite;
+            animation: vc-splash-glow-breathe 4.2s ease-in-out infinite;
+            will-change: transform, opacity;
         }
         @keyframes vc-splash-glow-breathe {
-            0%, 100% { transform: scale(0.94); opacity: 0.7; }
-            50% { transform: scale(1.06); opacity: 1; }
+            0%, 100% { transform: scale(0.97); opacity: 0.75; }
+            50% { transform: scale(1.03); opacity: 1; }
         }
-        .vc-splash-logo-ring {
+        /* A single soft halo instead of the old pair of expanding "sonar"
+           rings — calmer, and rotation (transform only) is much cheaper to
+           animate than the old scale+opacity pulse loop. */
+        .vc-splash-logo-halo {
             position: absolute;
-            width: calc(var(--vc-logo-w) + 44px);
-            height: calc(var(--vc-logo-h) + 44px);
+            width: calc(var(--vc-logo-w) + 56px);
+            height: calc(var(--vc-logo-h) + 56px);
             border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.22);
-            animation: vc-splash-ring-pulse 2.8s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+            background: conic-gradient(
+                from 0deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.3) 10%,
+                rgba(255, 255, 255, 0) 28%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            filter: blur(5px);
+            opacity: 0.55;
+            -webkit-mask-image: radial-gradient(closest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+            mask-image: radial-gradient(closest-side, transparent calc(100% - 10px), #000 calc(100% - 9px));
+            animation: vc-splash-halo-spin 9s linear infinite;
+            will-change: transform;
         }
-        .vc-splash-logo-ring.vc-splash-ring-delay {
-            animation-delay: 1.4s;
-        }
-        @keyframes vc-splash-ring-pulse {
-            0% { transform: scale(0.82); opacity: 0.6; }
-            70% { opacity: 0.18; }
-            100% { transform: scale(1.32); opacity: 0; }
+        @keyframes vc-splash-halo-spin {
+            to { transform: rotate(360deg); }
         }
         .vc-splash-logo {
             position: relative;
@@ -661,11 +759,14 @@ function build() {
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            animation: vc-splash-title-shine 5s linear infinite;
+            /* Shines once on load instead of looping background-position
+               forever (a surprisingly expensive, paint-heavy animation to
+               run continuously); it settles on the final frame afterwards. */
+            animation: vc-splash-title-shine 1.6s ease-out 1 forwards;
         }
         @keyframes vc-splash-title-shine {
             0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+            100% { background-position: 160% center; }
         }
         .vc-splash-version {
             font-size: 12px;
@@ -676,11 +777,17 @@ function build() {
         .vc-splash-bar-row {
             display: flex;
             align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
             gap: 10px;
             margin-bottom: 14px;
         }
         .vc-splash-bar-track {
             width: 220px;
+            max-width: 100%;
+            flex-shrink: 1;
             height: 4px;
             border-radius: 2px;
             background: #202329;
@@ -692,13 +799,23 @@ function build() {
             height: 100%;
             border-radius: 2px;
             background: linear-gradient(90deg, #d6d9de, #f5f6f8, #d6d9de);
-            background-size: 200% auto;
             transition: width 350ms ease;
-            animation: vc-splash-bar-shine 2s linear infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        .vc-splash-bar-fill::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            width: 50%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+            transform: translate3d(-150%, 0, 0);
+            animation: vc-splash-bar-shine 2.4s ease-in-out infinite;
+            will-change: transform;
         }
         @keyframes vc-splash-bar-shine {
-            0% { background-position: 0% center; }
-            100% { background-position: 200% center; }
+            0% { transform: translate3d(-150%, 0, 0); }
+            100% { transform: translate3d(250%, 0, 0); }
         }
         .vc-splash-percent {
             font-size: 11px;
@@ -709,6 +826,9 @@ function build() {
         .vc-splash-status-row {
             display: flex;
             align-items: center;
+            justify-content: center;
+            width: 100%;
+            box-sizing: border-box;
             gap: 6px;
             min-height: 16px;
             margin-bottom: 40px;
@@ -750,6 +870,8 @@ function build() {
         }
         .vc-splash-error-details {
             width: min(460px, 80vw);
+            max-width: 100%;
+            box-sizing: border-box;
             max-height: 0;
             margin: 0 0 14px 0;
             padding: 0 12px;
@@ -780,6 +902,8 @@ function build() {
             left: 50%;
             transform: translateX(-50%);
             width: min(520px, 80vw);
+            max-width: 100%;
+            box-sizing: border-box;
             text-align: center;
         }
         .vc-splash-tip-label {
@@ -812,24 +936,25 @@ function build() {
             <div class="vc-splash-sound-toggle" id="vc-splash-sound" role="button" aria-label="Mute startup sound">${icon("speakerHigh", 18)}</div>
             <input class="vc-splash-volume-slider" id="vc-splash-volume" type="range" min="0" max="100" value="50" aria-label="Startup sound volume" />
         </div>
-        <div class="vc-splash-logo-wrap">
-            <div class="vc-splash-logo-glow"></div>
-            <div class="vc-splash-logo-ring"></div>
-            <div class="vc-splash-logo-ring vc-splash-ring-delay"></div>
-            <img class="vc-splash-logo" alt="PatchCord" />
+        <div class="vc-splash-main">
+            <div class="vc-splash-logo-wrap">
+                <div class="vc-splash-logo-glow"></div>
+                <div class="vc-splash-logo-halo"></div>
+                <img class="vc-splash-logo" alt="PatchCord" />
+            </div>
+            <div class="vc-splash-title">PatchCord</div>
+            <div class="vc-splash-version">${gitHash ?? ""}</div>
+            <div class="vc-splash-bar-row">
+                <div class="vc-splash-bar-track"><div class="vc-splash-bar-fill" id="vc-splash-bar"></div></div>
+                <div class="vc-splash-percent" id="vc-splash-percent">0%</div>
+            </div>
+            <div class="vc-splash-status-row">
+                <span class="vc-splash-status-icon" id="vc-splash-status-icon">${icon("power", 14)}</span>
+                <span class="vc-splash-status" id="vc-splash-status"></span>
+            </div>
+            <span class="vc-splash-error-toggle" id="vc-splash-error-toggle" role="button">Show details</span>
+            <pre class="vc-splash-error-details" id="vc-splash-error-details"></pre>
         </div>
-        <div class="vc-splash-title">PatchCord</div>
-        <div class="vc-splash-version">${gitHash ?? ""}</div>
-        <div class="vc-splash-bar-row">
-            <div class="vc-splash-bar-track"><div class="vc-splash-bar-fill" id="vc-splash-bar"></div></div>
-            <div class="vc-splash-percent" id="vc-splash-percent">0%</div>
-        </div>
-        <div class="vc-splash-status-row">
-            <span class="vc-splash-status-icon" id="vc-splash-status-icon">${icon("power", 14)}</span>
-            <span class="vc-splash-status" id="vc-splash-status"></span>
-        </div>
-        <span class="vc-splash-error-toggle" id="vc-splash-error-toggle" role="button">Show details</span>
-        <pre class="vc-splash-error-details" id="vc-splash-error-details"></pre>
         <div class="vc-splash-tip-box">
             <div class="vc-splash-tip-label">${icon("gear", 12)}DID YOU KNOW</div>
             <div class="vc-splash-tip-text">${TIPS[Math.floor(Math.random() * TIPS.length)]}</div>
@@ -990,8 +1115,14 @@ export function showSplashScreen() {
     try {
         build();
         shownAt = Date.now();
-        playBootChime();
-        startAmbientHum();
+
+        tryPlayCustomBootAudio().then(played => {
+            if (!played) {
+                playBootChime();
+                startAmbientHum();
+            }
+        });
+
         playBootSequence(runUpdateCheck);
         setTimeout(() => hideSplashScreen(), MAX_VISIBLE_MS);
     } catch (err) {
@@ -1019,6 +1150,7 @@ export function hideSplashScreen() {
             setStatusTone("success");
             setProgress(1);
             stopAmbientHum();
+            stopCustomBootAudio();
             root.classList.add("vc-splash-hidden");
 
             setTimeout(() => {

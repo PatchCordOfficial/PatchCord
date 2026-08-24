@@ -30,6 +30,7 @@ import { Alerts, GuildMemberStore, React, UserStore } from "@webpack/common";
 import { MacOSVibrancySettings } from "./MacVibrancySettings";
 import { NotificationSection } from "./NotificationSettings";
 import { PatchcordBanner } from "./PatchcordBanner";
+import { SplashSoundSettings } from "./SplashSoundSettings";
 import { WindowsMaterialSettings } from "./WindowsMaterialSettings";
 
 import { PC_ICON_DATA_URL } from "@components/Icons/PatchCordIcon";
@@ -244,6 +245,8 @@ function EquicordSettings() {
             </Notice.Info>
 
             <Switches />
+
+            {IS_DISCORD_DESKTOP && <SplashSoundSettings />}
 
             <MacOSVibrancySettings />
             <WindowsMaterialSettings />

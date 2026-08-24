@@ -1,0 +1,12 @@
+#vc-discord-title-bar-label-overlay {
+    position: fixed;
+    z-index: 9999;
+    transform: translateY(-50%);
+    color: var(--header-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+}
