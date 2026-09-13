@@ -18,14 +18,19 @@
 
 import "./style.css";
 
+import { findGroupChildrenByChildId, NavContextMenuPatchCallback } from "@api/ContextMenu";
 import { definePluginSettings } from "@api/Settings";
+import { Flex } from "@components/Flex";
+import { HeadingSecondary } from "@components/Heading";
+import { Paragraph } from "@components/Paragraph";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Devs, EquicordDevs } from "@utils/constants";
 import { classNameFactory } from "@utils/css";
+import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
-import type { Channel, Role } from "@vencord/discord-types";
-import { ChannelStore, PermissionsBits, PermissionStore, Tooltip } from "@webpack/common";
+import type { Channel, Guild, Role } from "@vencord/discord-types";
+import { Button, ChannelStore, FluxDispatcher, GuildChannelStore, Menu, PermissionsBits, PermissionStore, Tooltip } from "@webpack/common";
 
 import HiddenChannelLockScreen, { setChannelBeginHeader } from "./components/HiddenChannelLockScreen";
 
@@ -45,6 +50,126 @@ const enum ChannelStyle {
 }
 
 const CONNECT = 1n << 20n;
+
+const enum FilterMode {
+    Blacklist,
+    Whitelist
+}
+
+interface FilteredGuild {
+    id: string;
+    name: string;
+}
+
+// Discord caches the computed channel list per-guild and only recomputes it when it thinks
+// the underlying channel data changed. Since toggling our blacklist/whitelist doesn't touch
+// any real channel data, that cache goes stale and the UI won't reflect the new filter state
+// until something else forces a recompute (e.g. a full reload). Dispatching a CHANNEL_UPDATES
+// event with the guild's own (unchanged) channels is enough to invalidate that cache and make
+// every subscribed component re-render and re-run our filtering logic immediately.
+function refreshGuildChannels(guildId: string | null | undefined) {
+    if (!guildId) return;
+
+    try {
+        const channels = GuildChannelStore.getChannels(guildId as any, true as any);
+        const flatChannels: Channel[] = [];
+
+        for (const value of Object.values(channels ?? {})) {
+            if (!Array.isArray(value)) continue;
+            for (const entry of value) {
+                const channel = (entry as any)?.channel;
+                if (channel?.id) flatChannels.push(channel);
+            }
+        }
+
+        if (flatChannels.length) {
+            FluxDispatcher.dispatch({ type: "CHANNEL_UPDATES", channels: flatChannels } as any);
+        }
+    } catch (e) {
+        console.error("[ShowHiddenChannels#refreshGuildChannels]: ", e);
+    }
+}
+
+function refreshAllGuilds() {
+    try {
+        const allGuilds = GuildChannelStore.getAllGuilds();
+        for (const guildId of Object.keys(allGuilds ?? {})) {
+            refreshGuildChannels(guildId);
+        }
+    } catch (e) {
+        console.error("[ShowHiddenChannels#refreshAllGuilds]: ", e);
+    }
+}
+
+function FilteredGuildsComponent() {
+    const { filteredGuilds, filterMode } = settings.use(["filteredGuilds", "filterMode"]);
+
+    function removeGuild(id: string) {
+        settings.store.filteredGuilds = settings.store.filteredGuilds
+            .filter(guild => guild.id !== id)
+            .map(guild => ({ id: guild.id, name: guild.name }));
+        refreshGuildChannels(id);
+    }
+
+    const modeLabel = filterMode === FilterMode.Whitelist ? "Whitelist" : "Blacklist";
+
+    return (
+        <Flex flexDirection="column">
+            <HeadingSecondary>{modeLabel}ed Servers</HeadingSecondary>
+            <Paragraph className={Margins.bottom8}>
+                Right click a server in your server list and use the {modeLabel} option to add or remove it from this list.
+                Changes apply immediately. If you switch the Filter Mode above, use the button below (or switch servers)
+                to refresh servers that are already open.
+            </Paragraph>
+            {filteredGuilds.length === 0 && <Paragraph>No servers added.</Paragraph>}
+            {filteredGuilds.map(guild => (
+                <Flex key={guild.id} flexDirection="row" justifyContent="space-between" alignItems="center">
+                    <Paragraph>{guild.name}</Paragraph>
+                    <Button size={Button.Sizes.SMALL} color={Button.Colors.RED} onClick={() => removeGuild(guild.id)}>
+                        Remove
+                    </Button>
+                </Flex>
+            ))}
+            <Button className={Margins.top8} size={Button.Sizes.SMALL} onClick={() => refreshAllGuilds()}>
+                Refresh All Servers Now
+            </Button>
+        </Flex>
+    );
+}
+
+const GuildContextMenuPatch: NavContextMenuPatchCallback = (children, { guild }: { guild: Guild; }) => {
+    if (guild == null) return;
+
+    const group = findGroupChildrenByChildId("privacy", children) ?? children;
+
+    const isListed = settings.store.filteredGuilds.some(entry => entry.id === guild.id);
+    const modeLabel = settings.store.filterMode === FilterMode.Whitelist ? "Whitelist" : "Blacklist";
+
+    group.push(
+        <Menu.MenuItem
+            id="vc-shc-toggle-guild"
+            label={isListed ? `Remove from ${modeLabel}` : `Add to ${modeLabel}`}
+            action={() => {
+                // Always rebuild plain {id, name} objects here: reading arrays/objects back out of
+                // settings.store returns Proxy-wrapped copies, and writing those Proxies back into the
+                // store corrupts SettingsStore.plain. That later breaks the settings IPC sync (which
+                // uses structuredClone under the hood) with "An object could not be cloned" on the
+                // very next settings save, anywhere in the app.
+                if (isListed) {
+                    settings.store.filteredGuilds = settings.store.filteredGuilds
+                        .filter(entry => entry.id !== guild.id)
+                        .map(entry => ({ id: entry.id, name: entry.name }));
+                } else {
+                    settings.store.filteredGuilds = [
+                        ...settings.store.filteredGuilds.map(entry => ({ id: entry.id, name: entry.name })),
+                        { id: guild.id, name: guild.name }
+                    ];
+                }
+                refreshGuildChannels(guild.id);
+            }}
+        />
+    );
+};
 
 export const settings = definePluginSettings({
     channelStyle: {
@@ -72,6 +197,25 @@ export const settings = definePluginSettings({
         description: "Whether the allowed users and roles dropdown on hidden channels should be open by default",
         type: OptionType.BOOLEAN,
         default: true
+    },
+    filterMode: {
+        description: "Blacklist: show hidden channels everywhere except the listed servers. Whitelist: only show hidden channels in the listed servers.",
+        type: OptionType.SELECT,
+        options: [
+            { label: "Blacklist", value: FilterMode.Blacklist, default: true },
+            { label: "Whitelist", value: FilterMode.Whitelist }
+        ],
+        onChange: () => refreshAllGuilds()
+    },
+    filteredGuilds: {
+        type: OptionType.CUSTOM,
+        default: [] as FilteredGuild[],
+        description: ""
+    },
+    manageFilteredGuilds: {
+        type: OptionType.COMPONENT,
+        description: "",
+        component: FilteredGuildsComponent
     }
 });
 
@@ -87,30 +231,35 @@ export default definePlugin({
     isModified: true,
     settings,
 
+    contextMenus: {
+        "guild-context": GuildContextMenuPatch,
+        "guild-header-popout": GuildContextMenuPatch
+    },
+
     patches: [
         {
             // RenderLevel defines if a channel is hidden, collapsed in category, visible, etc
             find: '"placeholder-channel-id"',
             replacement: [
-                // Remove the special logic for channels we don't have access to
+                // Remove the special logic for channels we don't have access to, unless the guild is filtered out
                 {
                     match: /if\(!\i\.\i\.can\(\i\.\i\.VIEW_CHANNEL.+?{if\(this\.id===\i\).+?threadIds:\[\]}}/,
-                    replace: ""
+                    replace: m => `if($self.shouldShowVanillaBehavior(this.record)){${m}}`
                 },
                 // Do not check for unreads when selecting the render level if the channel is hidden
                 {
                     match: /(?<=&&)(?=!\i\.\i\.hasUnread\(this\.record\.id\))/,
                     replace: "$self.isHiddenChannel(this.record)||"
                 },
-                // Make channels we dont have access to be the same level as normal ones
+                // Make channels we dont have access to be the same level as normal ones, unless the guild is filtered out
                 {
-                    match: /(this\.record\)\?{renderLevel:(.+?),threadIds.+?renderLevel:).+?(?=,threadIds)/g,
-                    replace: (_, rest, defaultRenderLevel) => `${rest}${defaultRenderLevel}`
+                    match: /(this\.record\)\?{renderLevel:(.+?),threadIds.+?renderLevel:)(.+?)(?=,threadIds)/g,
+                    replace: (_, rest, defaultRenderLevel, originalExpression) => `${rest}$self.shouldShowVanillaBehavior(this.record)?(${originalExpression}):(${defaultRenderLevel})`
                 },
-                // Remove permission checking for getRenderLevel function
+                // Remove permission checking for getRenderLevel function, unless the guild is filtered out
                 {
-                    match: /(getRenderLevel\(\i\){.+?return)!\i\.\i\.can\(\i\.\i\.VIEW_CHANNEL,this\.record\)\|\|/,
-                    replace: (_, rest) => `${rest} `
+                    match: /(getRenderLevel\(\i\){.+?return)(!\i\.\i\.can\(\i\.\i\.VIEW_CHANNEL,this\.record\)\|\|)/,
+                    replace: (_, rest, permissionCheck) => `${rest} $self.shouldShowVanillaBehavior(this.record)&&${permissionCheck}`
                 }
             ]
         },
@@ -480,7 +629,7 @@ export default definePlugin({
                 {
                     // Filter hidden channels from GuildChannelStore.getChannels unless told otherwise
                     match: /(?<=getChannels\(\i)(\){.*?)return (.+?)}/,
-                    replace: (_, rest, channels) => `,shouldIncludeHidden${rest}return $self.resolveGuildChannels(${channels},shouldIncludeHidden??arguments[0]==="@favorites");}`
+                    replace: (_, rest, channels) => `,shouldIncludeHidden${rest}return $self.resolveGuildChannels(${channels},shouldIncludeHidden??arguments[0]==="@favorites",arguments[0]);}`
                 },
             ]
         },
@@ -529,23 +678,60 @@ export default definePlugin({
         return mergedPermissions;
     },
 
-    isHiddenChannel(channel: Channel & { channelId?: string; }, checkConnect = false) {
+    resolveChannelRecord(channel: (Channel & { channelId?: string; }) | null | undefined) {
+        if (channel == null) return null;
+        if (Object.hasOwn(channel, "channelId")) {
+            if (channel.channelId == null) return null;
+            return ChannelStore.getChannel(channel.channelId);
+        }
+        return channel as Channel;
+    },
+
+    isPermissionDenied(channel: Channel & { channelId?: string; }, checkConnect = false) {
         try {
-            if (channel == null || Object.hasOwn(channel, "channelId") && channel.channelId == null) return false;
+            const resolvedChannel = this.resolveChannelRecord(channel);
+            if (resolvedChannel == null || resolvedChannel.isDM() || resolvedChannel.isGroupDM() || resolvedChannel.isMultiUserDM()) return false;
+            if (["browse", "customize", "guide"].includes(resolvedChannel.id)) return false;
 
-            if (channel.channelId != null) channel = ChannelStore.getChannel(channel.channelId);
-            if (channel == null || channel.isDM() || channel.isGroupDM() || channel.isMultiUserDM()) return false;
-            if (["browse", "customize", "guide"].includes(channel.id)) return false;
-
-            return !PermissionStore.can(PermissionsBits.VIEW_CHANNEL, channel) || checkConnect && !PermissionStore.can(PermissionsBits.CONNECT, channel);
+            return !PermissionStore.can(PermissionsBits.VIEW_CHANNEL, resolvedChannel) || checkConnect && !PermissionStore.can(PermissionsBits.CONNECT, resolvedChannel);
         } catch (e) {
-            console.error("[ViewHiddenChannels#isHiddenChannel]: ", e);
+            console.error("[ShowHiddenChannels#isPermissionDenied]: ", e);
             return false;
         }
     },
 
-    resolveGuildChannels(channels: Record<string | number, Array<{ channel: Channel; comparator: number; }> | string | number>, shouldIncludeHidden: boolean) {
-        if (shouldIncludeHidden) return channels;
+    isGuildEnabled(guildId: string | null | undefined) {
+        if (!guildId) return true;
+
+        const isListed = settings.store.filteredGuilds.some(entry => entry.id === guildId);
+        return settings.store.filterMode === FilterMode.Whitelist ? isListed : !isListed;
+    },
+
+    shouldShowVanillaBehavior(channel: Channel & { channelId?: string; }) {
+        const resolvedChannel = this.resolveChannelRecord(channel);
+        if (resolvedChannel == null) return false;
+
+        return !this.isGuildEnabled(resolvedChannel.guild_id);
+    },
+
+    isHiddenChannel(channel: Channel & { channelId?: string; }, checkConnect = false) {
+        try {
+            if (!this.isPermissionDenied(channel, checkConnect)) return false;
+
+            const resolvedChannel = this.resolveChannelRecord(channel);
+            if (resolvedChannel == null) return false;
+
+            return this.isGuildEnabled(resolvedChannel.guild_id);
+        } catch (e) {
+            console.error("[ShowHiddenChannels#isHiddenChannel]: ", e);
+            return false;
+        }
+    },
+
+    resolveGuildChannels(channels: Record<string | number, Array<{ channel: Channel; comparator: number; }> | string | number>, shouldIncludeHidden: boolean, guildId?: string) {
+        const forceVanilla = guildId != null && !this.isGuildEnabled(guildId);
+
+        if (shouldIncludeHidden && !forceVanilla) return channels;
 
         const res = {};
         for (const [key, maybeObjChannels] of Object.entries(channels)) {
@@ -557,7 +743,7 @@ export default definePlugin({
             res[key] ??= [];
 
             for (const objChannel of maybeObjChannels) {
-                if (isUncategorized(objChannel) || objChannel.channel.id === null || !this.isHiddenChannel(objChannel.channel)) res[key].push(objChannel);
+                if (isUncategorized(objChannel) || objChannel.channel.id === null || !this.isPermissionDenied(objChannel.channel)) res[key].push(objChannel);
             }
         }
 
