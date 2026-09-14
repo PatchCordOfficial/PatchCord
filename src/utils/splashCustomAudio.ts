@@ -46,7 +46,7 @@ function bytesToDataUri(bytes: Uint8Array, mimeType: string): Promise<string> {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
         reader.onerror = reject;
-        reader.readAsDataURL(new Blob([bytes], { type: mimeType }));
+        reader.readAsDataURL(new Blob([new Uint8Array(bytes)], { type: mimeType }));
     });
 }
 

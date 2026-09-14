@@ -6,10 +6,10 @@
 
 import { DATA_DIR } from "@main/utils/constants";
 import { fetchBuffer, fetchJson } from "@main/utils/http";
-import { shell } from "electron";
+import { IpcMainInvokeEvent, shell } from "electron";
 import { unzip } from "fflate";
 import { mkdir, rm, writeFile } from "fs/promises";
-import { join } from "path";
+import { dirname, join, resolve as resolvePath, sep } from "path";
 
 // Runs in Electron's main process, so these requests are plain Node fetches
 // and are NOT subject to the renderer's CORS restrictions - unlike a fetch()
@@ -42,21 +42,17 @@ async function extractZip(data: Buffer, outDir: string) {
             if (err) return void reject(err);
 
             Promise.all(Object.keys(files).map(async f => {
+                const target = resolvePath(outDir, f);
+                if (!target.startsWith(resolvePath(outDir) + sep)) throw new Error("The update archive contains an invalid path.");
                 if (f.endsWith("/")) {
-                    await mkdir(join(outDir, f), { recursive: true });
+                    await mkdir(target, { recursive: true });
                     return;
                 }
-
-                const pathElements = f.split("/");
-                const name = pathElements.pop()!;
-                const dir = join(outDir, pathElements.join("/"));
-
-                if (dir) await mkdir(dir, { recursive: true });
-                await writeFile(join(dir, name), files[f]);
+                await mkdir(dirname(target), { recursive: true });
+                await writeFile(target, files[f]);
             }))
                 .then(() => resolve())
                 .catch(err => {
-                    rm(outDir, { recursive: true, force: true });
                     reject(err);
                 });
         });
@@ -70,16 +66,23 @@ async function extractZip(data: Buffer, outDir: string) {
  * installer themselves. We open the folder rather than guessing an
  * executable name inside the zip, since that name varies per-platform.
  */
-export async function downloadAndOpenUpdate(version: string): Promise<string> {
+export async function downloadAndOpenUpdate(_event: IpcMainInvokeEvent, version: unknown) {
+    if (typeof version !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,99}$/.test(version)) {
+        return { success: false, error: "The update version is invalid." };
+    }
     const safeVersion = version.replace(/[^\w-]/g, "_");
     const extractDir = join(UPDATES_DIR, safeVersion);
 
-    await rm(extractDir, { recursive: true, force: true });
+    try {
+        await rm(extractDir, { recursive: true, force: true });
 
-    const zipData = await fetchBuffer(UPDATE_ZIP_URL);
-    await extractZip(zipData, extractDir);
+        const zipData = await fetchBuffer(UPDATE_ZIP_URL);
+        await extractZip(zipData, extractDir);
 
-    await shell.openPath(extractDir);
-
-    return extractDir;
+        const error = await shell.openPath(extractDir);
+        if (error) return { success: false, error: "The update folder could not be opened." };
+        return { success: true };
+    } catch {
+        return { success: false, error: "The update could not be downloaded or extracted." };
+    }
 }

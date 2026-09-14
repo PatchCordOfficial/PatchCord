@@ -7,8 +7,8 @@
 import { definePluginSettings } from "@api/Settings";
 import { findStoreLazy } from "@webpack";
 import definePlugin, { OptionType } from "@utils/types";
-import { ModalRoot, ModalHeader, ModalContent, ModalFooter, ModalCloseButton, ModalSize } from "@utils/modal";
-import { Button, Menu, openModal, showToast, TextInput, Toasts, useState } from "@webpack/common";
+import type { RenderModalProps } from "@vencord/discord-types";
+import { Button, Menu, Modal, openModal, showToast, TextInput, Toasts, useState } from "@webpack/common";
 
 const SortedGuildStore = findStoreLazy("SortedGuildStore");
 
@@ -44,17 +44,12 @@ function getCleanName(name: string): string {
     return name.replace(/^[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{200D}\u{FE0F}\u{20E3}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\p{Extended_Pictographic}\s]+/u, "").trim();
 }
 
-function FolderEmojiModal({ folderId, folderName, onClose }: { folderId: number; folderName: string; onClose: () => void }) {
+function FolderEmojiModal({ folderId, folderName, onClose, transitionState }: RenderModalProps & { folderId: number; folderName: string; onClose: () => void }) {
     const [value, setValue] = useState("");
     const isUrl = value.trim().startsWith("http");
 
     return (
-        <ModalRoot size={ModalSize.SMALL}>
-            <ModalHeader>
-                <h3>Set Folder Emoji / Icon</h3>
-                <ModalCloseButton onClick={onClose} />
-            </ModalHeader>
-            <ModalContent>
+        <Modal title="Set Folder Emoji / Icon" size="sm" onClose={onClose} transitionState={transitionState}>
                 <TextInput
                     value={value}
                     onChange={(v: string) => setValue(v)}
@@ -78,8 +73,7 @@ function FolderEmojiModal({ folderId, folderName, onClose }: { folderId: number;
                         />
                     </div>
                 )}
-            </ModalContent>
-            <ModalFooter>
+
                 <Button
                     color={Button.Colors.RED}
                     size={Button.Sizes.MEDIUM}
@@ -114,8 +108,7 @@ function FolderEmojiModal({ folderId, folderName, onClose }: { folderId: number;
                 >
                     Apply
                 </Button>
-            </ModalFooter>
-        </ModalRoot>
+        </Modal>
     );
 }
 
@@ -149,6 +142,7 @@ export default definePlugin({
                     action={() => {
                         openModal(modalProps => (
                             <FolderEmojiModal
+                                transitionState={modalProps.transitionState}
                                 folderId={props.folderId}
                                 folderName={currentName}
                                 onClose={modalProps.onClose}

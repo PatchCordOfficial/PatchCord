@@ -1,0 +1,45 @@
+<div class="vc-splash-shell">
+    <header class="vc-splash-header">
+        <div class="vc-splash-brand"><span class="vc-splash-mark" aria-hidden="true">P<span>c</span></span><div>PatchCord<small>Make yourself at home.</small></div></div>
+        <nav class="vc-splash-tabs" aria-label="Startup pages">
+            <button data-page="home" aria-current="page">Overview</button>
+            <button data-page="developers">Developers</button>
+            <button data-page="diagnostics">Diagnostics</button>
+        </nav>
+        <button class="vc-splash-icon-button" data-action="close" aria-label="Dismiss splash screen">✕</button>
+    </header>
+    <main>
+        <section data-panel="home" class="vc-splash-overview">
+            <div class="vc-splash-hero">
+                <div class="vc-splash-eyebrow"><span class="vc-splash-dot"></span> YOUR DISCORD. YOUR WAY.</div>
+                <h1>A better place<br>to <em>connect.</em></h1>
+                <p class="vc-splash-intro">Your plugins. Your personality.<br>A little more freedom in every conversation.</p>
+                <div class="vc-splash-main-actions"><button class="vc-splash-primary" data-action="close" id="vc-splash-continue">Continue to Discord <span aria-hidden="true">↗</span></button><button data-action="hold" id="vc-splash-hold" aria-pressed="false">Keep open</button></div>
+                <div class="vc-splash-stats"><div><strong id="vc-splash-enabled">0</strong><span>Active plugins</span></div><div><strong id="vc-splash-installed">0</strong><span>Available plugins</span></div><div><strong id="vc-splash-contributors">0</strong><span>Contributors</span></div></div>
+                <div class="vc-splash-tip"><span>GOOD TO KNOW</span><p id="vc-splash-tip"></p><button data-action="tip" aria-label="Next tip">Next tip →</button></div>
+            </div>
+            <aside class="vc-splash-launch">
+                <div class="vc-splash-card-top"><span>LAUNCH ACTIVITY</span><span id="vc-splash-elapsed">0.0s</span></div>
+                <div class="vc-splash-orbit" aria-hidden="true"><div class="vc-splash-ring"></div><span class="vc-splash-monogram">P<span>c</span><i></i></span></div>
+                <div class="vc-splash-status" aria-live="polite"><h2 id="vc-splash-status">Starting PatchCord</h2><p id="vc-splash-status-detail">Loading the client runtime.</p></div>
+                <div class="vc-splash-progress" role="progressbar" aria-label="Waiting for client readiness"><span></span></div>
+                <ol class="vc-splash-stages"><li data-stage="runtime"><span>01</span>Client runtime<b>Loading</b></li><li data-stage="plugins"><span>02</span>Plugin configuration<b>Waiting</b></li><li data-stage="connecting"><span>03</span>Discord interface<b>Waiting</b></li></ol>
+                <div class="vc-splash-update"><span class="vc-splash-dot"></span><div><strong id="vc-splash-update-status">Update check</strong><small id="vc-splash-update-detail">Checking this build.</small></div><button data-action="updates" id="vc-splash-update-button">Check</button></div>
+            </aside>
+        </section>
+        <section data-panel="developers" hidden>
+            <div class="vc-splash-section-heading"><div><div class="vc-splash-eyebrow">BUILT BY PEOPLE</div><h2>The people behind your client.</h2><p>Contributors credited by the plugins included in this build.</p></div><button data-action="source">View source ↗</button></div>
+            <div class="vc-splash-filters"><input id="vc-splash-search" type="search" placeholder="Search a developer or plugin" aria-label="Search contributors"><select id="vc-splash-scope" aria-label="Contributor group"><option value="all">All contributors</option><option value="patchcord">PatchCord plugin contributors</option></select><span id="vc-splash-dev-count"></span></div>
+            <div class="vc-splash-dev-grid" id="vc-splash-developers"></div>
+            <p class="vc-splash-attribution">Built on the work of Vencord, Equicord and the wider open source community. Original authors retain their credits.</p>
+        </section>
+        <section data-panel="diagnostics" hidden>
+            <div class="vc-splash-section-heading"><div><div class="vc-splash-eyebrow">A LITTLE PEACE OF MIND</div><h2>Know what’s happening.</h2><p>Real milestones and failures from this session.</p></div><button data-action="export">Export diagnostics ↓</button></div>
+            <div class="vc-splash-diagnostic-grid"><div class="vc-splash-card"><h3>Startup timeline</h3><ol id="vc-splash-events"></ol></div><div class="vc-splash-card"><h3>Plugin health</h3><p id="vc-splash-health"></p><ul id="vc-splash-issues"></ul><button data-action="refresh">Refresh diagnostics</button></div></div>
+            <div class="vc-splash-recovery"><div><h3>Start fresh. Keep your setup.</h3><p id="vc-splash-safe-description">Safe Mode skips optional plugins and patches without changing your saved plugin selection.</p></div><button data-action="safe" id="vc-splash-safe">Restart in Safe Mode</button><button data-action="confirm-safe" id="vc-splash-confirm-safe" hidden>Confirm restart</button><button data-action="cancel-safe" id="vc-splash-cancel-safe" hidden>Cancel</button></div>
+        </section>
+    </main>
+    <div class="vc-splash-shortcuts"><span>QUICK ACCESS</span><button data-action="folder">Settings folder ↗</button><button data-action="css">QuickCSS editor ↗</button><button data-action="download">Downloads ↗</button><button data-action="community">Community ↗</button><button data-action="reload">Reload client ↻</button></div>
+    <footer class="vc-splash-footer"><span id="vc-splash-build"></span><div class="vc-splash-audio"><button data-action="mute" id="vc-splash-mute" aria-pressed="false">Sound on</button><input id="vc-splash-volume" type="range" min="0" max="100" aria-label="Startup volume"><output id="vc-splash-volume-label">50%</output></div><label><input type="checkbox" id="vc-splash-autoclose"> Continue when ready</label></footer>
+    <div id="vc-splash-feedback" class="vc-splash-feedback" role="status" hidden></div>
+</div>

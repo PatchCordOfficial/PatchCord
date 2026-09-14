@@ -673,6 +673,10 @@ export const Devs = /* #__PURE__*/ Object.freeze({
 } satisfies Record<string, Dev>);
 
 export const EquicordDevs = Object.freeze({
+    Solar: {
+        name: "itssolar.dev",
+        id: 864612087741546527n
+    },
     nobody: {
         name: "nobody",
         id: 0n

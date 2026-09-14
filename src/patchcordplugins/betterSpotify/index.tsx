@@ -7,6 +7,7 @@
 import "./style.css";
 
 import ErrorBoundary from "@components/ErrorBoundary";
+import { HeadphonesIcon } from "@components/Icons";
 import definePlugin from "@utils/types";
 import { copyWithToast } from "@utils/discord";
 import { SpotifyStore, useStateFromStores } from "@webpack/common";
@@ -43,11 +44,14 @@ function SpotifyButton() {
     );
 }
 
+const SafeSpotifyButton = ErrorBoundary.wrap(SpotifyButton, { noop: true });
+
 export default definePlugin({
     name: "BetterSpotify",
     description: "Shows current Spotify track in your user area with one-click copy",
     authors: [{ name: "itssolar.dev", id: 864612087741546527n }],
     userAreaButton: {
-        render: ErrorBoundary.wrap(SpotifyButton, { noop: true })
+        render: () => <SafeSpotifyButton />,
+        icon: HeadphonesIcon
     }
 });

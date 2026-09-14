@@ -1,5 +1,6 @@
+import type { RenderModalProps as ModalProps } from "@vencord/discord-types";
 import { Button } from "@components/Button";
-import { Modal, ModalProps, React, TextInput, Toasts, useState } from "@webpack/common";
+import { Modal, React, TextInput, Toasts, useState } from "@webpack/common";
 import { RestAPI } from "@webpack/common";
 
 export default function TargetedBroadcastModal(props: ModalProps) {

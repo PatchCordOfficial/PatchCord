@@ -76,7 +76,7 @@ export default definePlugin({
     ],
 
     handleCrash(_this: any, errorState: any) {
-        DataStore.del("KeepCurrentChannel_previousData");
+        DataStore.del("KeepCurrentChannel_previousData").catch(err => CrashHandlerLogger.error("Failed to clear saved channel", err));
 
         if (IS_DEV) {
             try {
@@ -105,6 +105,7 @@ export default definePlugin({
                         });
                     } catch { }
 
+                    isRecovering = false;
                     return;
                 }
 
@@ -116,7 +117,7 @@ export default definePlugin({
             try {
                 if (!hasCrashedOnce) {
                     hasCrashedOnce = true;
-                    maybePromptToUpdate("Uh oh, Discord has just crashed... but good news, there is a Equicord update available that might fix this issue! Would you like to update now?", true);
+                    void maybePromptToUpdate("Uh oh, Discord has just crashed... but good news, there is a PatchCord update available that might fix this issue! Would you like to update now?", true).catch(err => CrashHandlerLogger.error("Failed to check for updates", err));
                 }
             } catch { }
 
@@ -126,6 +127,8 @@ export default definePlugin({
                 }
             } catch (err) {
                 CrashHandlerLogger.error("Failed to handle crash", err);
+            } finally {
+                isRecovering = false;
             }
         }, 1);
     },

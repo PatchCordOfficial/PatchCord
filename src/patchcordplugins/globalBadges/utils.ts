@@ -185,7 +185,7 @@ export async function loadBadges() {
                     badge: badgeUrl
                 };
             })
-            .filter((badge): badge is Record<string, any> => badge !== null);
+            .filter(badge => badge !== null);
 
         if (rawBadges.length && !filteredUsers[key].length) {
             console.log("CustomBadges: all PatchCord badges filtered out for user", { userId: key, rawBadges });

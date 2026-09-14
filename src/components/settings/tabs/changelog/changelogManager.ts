@@ -5,9 +5,11 @@
  */
 
 import { DataStore } from "@api/index";
+import { Logger } from "@utils/Logger";
+import { isObject } from "@utils/misc";
 
 import gitHash from "~git-hash";
-import plugins from "~plugins";
+import plugins, { PluginMeta } from "~plugins";
 
 export interface ChangelogEntry {
     hash: string;
@@ -35,7 +37,14 @@ const LAST_SEEN_HASH_KEY = "EquicordChangelog_LastSeenHash";
 const KNOWN_PLUGINS_KEY = "EquicordChangelog_KnownPlugins";
 const KNOWN_SETTINGS_KEY = "EquicordChangelog_KnownSettings";
 const LAST_REPO_CHECK_KEY = "EquicordChangelog_LastRepoCheck";
+const KNOWN_HASHES_KEY = "PatchCordChangelog_KnownHashes";
 const GITHUB_COMPARE_ENDPOINT = "https://api.github.com/repos";
+
+const logger = new Logger("Changelog");
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return isObject(value);
+}
 
 type KnownPluginSettingsMap = Map<string, Set<string>>;
 
@@ -44,7 +53,7 @@ function normalizeRepoUrl(repoUrl: string | null | undefined): string | null {
     try {
         const normalized = repoUrl.replace(/^git\+/, "");
         const url = new URL(normalized);
-        if (!url.hostname.endsWith("github.com")) return null;
+        if (url.protocol !== "https:" || url.hostname !== "github.com") return null;
         const segments = url.pathname.replace(/\.git$/, "").split("/").filter(Boolean);
         if (segments.length < 2) return null;
         return `${segments[0]}/${segments[1]}`;
@@ -67,38 +76,29 @@ async function fetchCommitsBetween(
                     Accept: "application/vnd.github+json",
                     "Cache-Control": "no-cache",
                 },
+                signal: AbortSignal.timeout(15_000),
             },
         );
 
         if (!res.ok) return [];
-        const data = await res.json();
-        if (!data || !Array.isArray(data.commits)) return [];
+        const data: unknown = await res.json();
+        if (!isRecord(data) || !Array.isArray(data.commits)) return [];
 
-        return data.commits.map((commit: any) => {
-            const message: string = commit?.commit?.message ?? "";
-            const summary = message.split("\n")[0] || "No message";
-            const rawAuthor =
-                commit?.commit?.author?.name ||
-                commit?.author?.login ||
-                undefined;
-            // If author is missing, use the user's username; otherwise replace any trailing discriminator (#1234) with the full Discord ID
-            const DISCORD_ID = "864612087741546527";
-            const authorName = rawAuthor
-                ? String(rawAuthor).replace(/#\d{1,}$/, `#${DISCORD_ID}`)
-                : "itssolar.dev";
-            const timestamp = commit?.commit?.author?.date
-                ? Date.parse(commit.commit.author.date)
-                : undefined;
-
-            return {
-                hash: commit?.sha || "",
-                author: authorName,
-                message: summary,
+        return data.commits.flatMap((entry: unknown): ChangelogEntry[] => {
+            if (!isRecord(entry) || typeof entry.sha !== "string" || !isRecord(entry.commit)
+                || typeof entry.commit.message !== "string") return [];
+            const author = isRecord(entry.commit.author) ? entry.commit.author : undefined;
+            const account = isRecord(entry.author) ? entry.author : undefined;
+            const timestamp = typeof author?.date === "string" ? Date.parse(author.date) : undefined;
+            return [{
+                hash: entry.sha,
+                author: typeof author?.name === "string" ? author.name : typeof account?.login === "string" ? account.login : "Unknown author",
+                message: entry.commit.message.split("\n")[0] || "No message",
                 timestamp: Number.isNaN(timestamp) ? undefined : timestamp,
-            } as ChangelogEntry;
+            }];
         });
     } catch (err) {
-        console.warn("Failed to fetch commits between hashes", err);
+        logger.warn("Failed to fetch commits between hashes", err);
         return [];
     }
 }
@@ -178,12 +178,8 @@ async function persistKnownSettings(
     await DataStore.set(KNOWN_SETTINGS_KEY, serializeKnownSettings(map));
 }
 
-function isMapLike(value: any): value is Map<string, string[]> {
-    return (
-        value &&
-        typeof value.get === "function" &&
-        typeof value.size === "number"
-    );
+function isMapLike(value: unknown): value is Map<string, string[]> {
+    return value instanceof Map;
 }
 
 export function getNewSettingsSize(
@@ -217,7 +213,9 @@ export async function getChangelogHistory(): Promise<ChangelogHistory> {
         });
     }
 
-    return history || [];
+    return (history || []).filter(session => !session.commits.some(commit =>
+        ["broadcast-live", "massive-plugin-drop", "cloud-sync-fix", "crash-fix-1", "core-rewrite"].includes(commit.hash),
+    ));
 }
 
 export async function saveUpdateSession(
@@ -309,6 +307,7 @@ export async function saveUpdateSession(
 
     await updateKnownPlugins();
     await updateKnownSettings();
+    await DataStore.set(KNOWN_HASHES_KEY, Object.fromEntries(Object.entries(PluginMeta).map(([name, meta]) => [name, meta.hash])));
 }
 
 export async function getLastSeenHash(): Promise<string | null> {
@@ -343,7 +342,7 @@ function getCurrentSettings(pluginList: string[]): KnownPluginSettingsMap {
 }
 
 export async function getKnownSettings(): Promise<KnownPluginSettingsMap> {
-    const mapData = (await DataStore.get(KNOWN_SETTINGS_KEY)) as any;
+    const mapData: unknown = await DataStore.get(KNOWN_SETTINGS_KEY);
     if (mapData === undefined) {
         const knownPlugins = await getKnownPlugins();
         const pluginNames = [
@@ -440,15 +439,15 @@ export async function getNewPlugins(): Promise<string[]> {
 }
 
 export async function getUpdatedPlugins(): Promise<string[]> {
-    // This is a placeholder - in a real implementation, you'd track plugin version changes
-    // For now, we'll return empty array since plugin version tracking would need to be implemented
-    return [];
+    const known = await DataStore.get<Record<string, string>>(KNOWN_HASHES_KEY);
+    if (!known) return [];
+    return Object.keys(plugins).filter(name =>
+        Object.hasOwn(known, name) && known[name] !== PluginMeta[name].hash && !plugins[name].hidden && !plugins[name].required,
+    );
 }
 
 export async function clearChangelogHistory(): Promise<void> {
     await DataStore.del(CHANGELOG_HISTORY_KEY);
-    await DataStore.del(LAST_SEEN_HASH_KEY);
-    await DataStore.del(KNOWN_SETTINGS_KEY);
 }
 
 export async function clearIndividualLog(logId: string): Promise<void> {
@@ -466,234 +465,15 @@ export async function initializeChangelog(): Promise<void> {
         await updateKnownSettings();
     }
 
-    // Seed changelog history with recent notable changes if empty or missing the latest seeded data.
-    const existing = await getChangelogHistory();
-    const hasLatestSeed = existing?.some(session => session.commits?.some(c => c.hash === "broadcast-live"));
-    if (!existing || existing.length === 0 || !hasLatestSeed) {
-        const now = Date.now();
-        const seed: ChangelogHistory = [
-            {
-                id: crypto.randomUUID(),
-                timestamp: now,
-                fromHash: "unknown",
-                toHash: "live-presence-v1",
-                commits: [
-                    {
-                        hash: "broadcast-live",
-                        author: "itssolardev",
-                        message: "Implement global Broadcast System for real-time announcements to all PatchCord clients",
-                        timestamp: now - 1000 * 60 * 10,
-                    },
-                    {
-                        hash: "broadcast-author",
-                        author: "itssolardev",
-                        message: "Update broadcast author display to PatchCord",
-                        timestamp: now - 1000 * 60 * 15,
-                    },
-                    {
-                        hash: "broadcast-clickable-link",
-                        author: "itssolardev",
-                        message: "Make broadcast links clickable in announcement toasts",
-                        timestamp: now - 1000 * 60 * 20,
-                    },
-                    {
-                        hash: "broadcast-tts",
-                        author: "itssolardev",
-                        message: "Play TTS audio after broadcast.mp3 finishes",
-                        timestamp: now - 1000 * 60 * 25,
-                    },
-                    {
-                        hash: "patchcord-plugin-icon",
-                        author: "itssolardev",
-                        message: "Use patchcord.itssolar.dev/user.png for PatchCord plugin cards",
-                        timestamp: now - 1000 * 60 * 30,
-                    },
-                    {
-                        hash: "qr-login-label",
-                        author: "itssolardev",
-                        message: "Rename QR login settings entry to Login with QR",
-                        timestamp: now - 1000 * 60 * 35,
-                    },
-                    {
-                        hash: "custom-badges-icon",
-                        author: "itssolardev",
-                        message: "Improve the Custom Badges settings tab icon",
-                        timestamp: now - 1000 * 60 * 40,
-                    },
-                    {
-                        hash: "live-count",
-                        author: "itssolardev",
-                        message: "Add Live Online Users counter with 1-minute real-time telemetry",
-                        timestamp: now - 1000 * 60 * 20,
-                    },
-                    {
-                        hash: "broadcast-ui",
-                        author: "itssolardev",
-                        message: "Add rich Notice UI for broadcasts with clickable links and colored badges",
-                        timestamp: now - 1000 * 60 * 30,
-                    },
-                    {
-                        hash: "badges-fix",
-                        author: "itssolardev",
-                        message: "Fix Custom Badges URL mapping to point correctly to patchcord.itssolar.dev/badges.json",
-                        timestamp: now - 1000 * 60 * 40,
-                    }
-                ],
-                newPlugins: ["PatchCordBroadcasts"],
-                updatedPlugins: ["GlobalBadges"],
-                type: "update",
-            },
-            {
-                id: crypto.randomUUID(),
-                timestamp: now - 1000 * 60 * 60 * 1,
-                fromHash: "unknown",
-                toHash: gitHash,
-                commits: [
-                    {
-                        hash: "massive-plugin-drop",
-                        author: "itssolardev",
-                        message: "Add 200+ new plugins ported from upstream and community repositories",
-                        timestamp: now - 1000 * 60 * 60 * 0.5,
-                    },
-                    {
-                        hash: "share-plugins-feat",
-                        author: "itssolardev",
-                        message: "Add Share Plugins functionality to easily export and import plugin lists",
-                        timestamp: now - 1000 * 60 * 60 * 0.6,
-                    },
-                    {
-                        hash: "custom-badges",
-                        author: "itssolardev",
-                        message: "Implement Custom Badges system across user profiles and chat",
-                        timestamp: now - 1000 * 60 * 60 * 0.8,
-                    },
-                    {
-                        hash: "cl-redesign-v2",
-                        author: "itssolardev",
-                        message: "Implement full changelog redesign with animated cards, user avatars, and SVG icons",
-                        timestamp: now - 1000 * 60 * 60 * 0.9,
-                    },
-                    {
-                        hash: "profile-fix",
-                        author: "itssolardev",
-                        message: "Fix missing profile picture resolution via UserStore in changelog component",
-                        timestamp: now - 1000 * 60 * 60 * 1,
-                    },
-                ],
-                newPlugins: ["SharePlugins", "CustomBadges", "200More..."],
-                updatedPlugins: [],
-                type: "update",
-            },
-            {
-                id: crypto.randomUUID(),
-                timestamp: now - 1000 * 60 * 60 * 12,
-                fromHash: "unknown",
-                toHash: "d8c2b1a",
-                commits: [
-                    {
-                        hash: "cloud-sync-fix",
-                        author: "itssolardev",
-                        message: "Fix Cloud sync issues where settings would sometimes revert to defaults",
-                        timestamp: now - 1000 * 60 * 60 * 8,
-                    },
-                    {
-                        hash: "credits-fix",
-                        author: "itssolardev",
-                        message: "Fix Credits page not displaying recent contributors properly",
-                        timestamp: now - 1000 * 60 * 60 * 9,
-                    },
-                    {
-                        hash: "assets-update",
-                        author: "itssolardev",
-                        message: "Remove old legacy images and add new high-res UI assets",
-                        timestamp: now - 1000 * 60 * 60 * 10,
-                    },
-                    {
-                        hash: "donate-btn-add",
-                        author: "itssolardev",
-                        message: "Add Donate quick action card to settings tab opening Ko-fi",
-                        timestamp: now - 1000 * 60 * 60 * 11,
-                    },
-                    {
-                        hash: "remove-emojis",
-                        author: "itssolardev",
-                        message: "Remove all native emojis from changelog in favor of scalable SVG components",
-                        timestamp: now - 1000 * 60 * 60 * 12,
-                    },
-                ],
-                newPlugins: ["CloudSync", "BetterCredits"],
-                updatedPlugins: ["ThemeUpdater"],
-                type: "update",
-            },
-            {
-                id: crypto.randomUUID(),
-                timestamp: now - 1000 * 60 * 60 * 24 * 2,
-                fromHash: "unknown",
-                toHash: "a4f89d3",
-                commits: [
-                    {
-                        hash: "crash-fix-1",
-                        author: "itssolardev",
-                        message: "Crash fix: Resolve unhandled promise rejection when closing settings modal too quickly",
-                        timestamp: now - 1000 * 60 * 60 * 24 * 1.2,
-                    },
-                    {
-                        hash: "banner-default",
-                        author: "itssolardev",
-                        message: "Set default Patchcord banner to banner1.png and add cache-busting to banner loads",
-                        timestamp: now - 1000 * 60 * 60 * 24 * 1.5,
-                    },
-                    {
-                        hash: "deprecated-api-drop",
-                        author: "itssolardev",
-                        message: "Remove deprecated legacy plugin manager API bindings",
-                        timestamp: now - 1000 * 60 * 60 * 24 * 1.8,
-                    },
-                    {
-                        hash: "banner-discovery",
-                        author: "itssolardev",
-                        message: "Fix banner discovery to correctly match banner1..banner7 and avoid fallback",
-                        timestamp: now - 1000 * 60 * 60 * 24 * 2,
-                    },
-                ],
-                newPlugins: [],
-                updatedPlugins: ["PluginRepo", "TypingTweaks", "MessageLogger"],
-                type: "update",
-            },
-            {
-                id: crypto.randomUUID(),
-                timestamp: now - 1000 * 60 * 60 * 24 * 7,
-                fromHash: "unknown",
-                toHash: "f1e3c8b",
-                commits: [
-                    {
-                        hash: "core-rewrite",
-                        author: "itssolardev",
-                        message: "Major core rewrite for better stability and performance",
-                        timestamp: now - 1000 * 60 * 60 * 24 * 5,
-                    },
-                    {
-                        hash: "memory-leak-fix",
-                        author: "itssolardev",
-                        message: "Fix severe memory leak in message logging module",
-                        timestamp: now - 1000 * 60 * 60 * 24 * 6,
-                    },
-                    {
-                        hash: "remove-telemetry",
-                        author: "itssolardev",
-                        message: "Remove obsolete telemetry endpoints from the network stack",
-                        timestamp: now - 1000 * 60 * 60 * 24 * 7,
-                    },
-                ],
-                newPlugins: ["PerformanceMonitor"],
-                updatedPlugins: [],
-                type: "update",
-            },
-        ];
-
-        await DataStore.set(CHANGELOG_HISTORY_KEY, seed);
+    const knownHashes = await DataStore.get(KNOWN_HASHES_KEY);
+    const commits = await getCommitsSinceLastSeen("https://github.com/PatchCordOfficial/PatchCord");
+    const newPlugins = await getNewPlugins();
+    const updatedPlugins = await getUpdatedPlugins();
+    const newSettings = await getNewSettings();
+    await saveUpdateSession(commits, newPlugins, updatedPlugins, newSettings);
+    if (!knownHashes) {
+        await DataStore.set(KNOWN_HASHES_KEY, Object.fromEntries(Object.entries(PluginMeta).map(([name, meta]) => [name, meta.hash])));
     }
-
 }
 
 export async function getLastRepositoryCheckHash(): Promise<string | null> {

@@ -5,7 +5,7 @@
  */
 
 import { showNotice } from "@api/Notices";
-import { hasAnyVisibleSettings, isPluginEnabled, pluginRequiresRestart, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
+import { hasAnyVisibleSettings, isPluginEnabled, isSafeMode, pluginRequiresRestart, startDependenciesRecursive, startPlugin, stopPlugin } from "@api/PluginManager";
 import { Settings } from "@api/Settings";
 import { CogWheel, InfoIcon } from "@components/Icons";
 import { AddonCard } from "@components/settings/AddonCard";
@@ -103,8 +103,8 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
         {
             condition: isEquicordPlugin,
             src: "https://equicord.org/icon.png",
-            alt: "Equicord",
-            title: "Equicord Plugin"
+            alt: "Upstream",
+            title: "Upstream Plugin"
         },
         {
             condition: isPatchcordPlugin,
@@ -147,7 +147,7 @@ export function PluginCard({ plugin, disabled, onRestartNeeded, onMouseEnter, on
             isNew={isNew}
             enabled={isEnabled()}
             setEnabled={toggleEnabled}
-            disabled={disabled}
+            disabled={disabled || isSafeMode}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
             infoButton={

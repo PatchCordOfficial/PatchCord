@@ -28,6 +28,7 @@ import { addMessagePopoverButton, removeMessagePopoverButton } from "@api/Messag
 import { addNicknameIcon, removeNicknameIcon } from "@api/NicknameIcons";
 import { Settings, SettingsStore } from "@api/Settings";
 import { disableStyle, enableStyle } from "@api/Styles";
+import { recordPluginIssue } from "@debug/reporterData";
 import { traceFunction } from "@debug/Tracer";
 import { Logger } from "@utils/Logger";
 import { onlyOnce } from "@utils/onlyOnce";
@@ -50,6 +51,7 @@ import { addUserAreaButton, removeUserAreaButton } from "./UserArea";
 const logger = new Logger("PluginManager", "#a6d189");
 
 export const PMLogger = logger;
+export let isSafeMode = false;
 
 /** Whether we have subscribed to flux events of all the enabled plugins when FluxDispatcher was ready */
 let enabledPluginsSubscribedFlux = false;
@@ -59,7 +61,7 @@ export function isPluginEnabled(p: string) {
     return (
         Plugins[p]?.required ||
         Plugins[p]?.isDependency ||
-        Settings.plugins[p]?.enabled
+        (!isSafeMode && Settings.plugins[p]?.enabled)
     ) ?? false;
 }
 export function isPluginRequired(p: string) {
@@ -146,6 +148,7 @@ export const startAllPlugins = traceFunction("startAllPlugins", function startAl
 });
 
 export function startDependenciesRecursive(p: Plugin) {
+    if (isSafeMode && !isPluginEnabled(p.name)) return { restartNeeded: false, failures: [p.name] };
     const settings = Settings.plugins;
     let restartNeeded = false;
     const failures: string[] = [];
@@ -156,7 +159,7 @@ export function startDependenciesRecursive(p: Plugin) {
             startDependenciesRecursive(dep);
 
             // If the plugin has patches, don't start the plugin, just enable it.
-            settings[d].enabled = true;
+            if (!isSafeMode) settings[d].enabled = true;
             dep.isDependency = true;
 
             if (pluginRequiresRestart(dep)) {
@@ -217,6 +220,7 @@ export function subscribeAllPluginsFluxEvents(fluxDispatcher: typeof FluxDispatc
 }
 
 export const startPlugin = traceFunction("startPlugin", function startPlugin(p: Plugin) {
+    if (isSafeMode && !isPluginEnabled(p.name)) return false;
     const {
         name, commands, contextMenus, managedStyle, userProfileBadges,
         onBeforeMessageEdit, onBeforeMessageSend, onMessageClick,
@@ -233,8 +237,15 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
             return false;
         }
         try {
-            p.start();
+            const result: unknown = p.start();
+            if (result instanceof Promise) {
+                void result.catch(e => {
+                    recordPluginIssue(name, "Startup failed");
+                    logger.error(`Failed to start ${name}\n`, e);
+                });
+            }
         } catch (e) {
+            recordPluginIssue(name, "Startup failed");
             logger.error(`Failed to start ${name}\n`, e);
             return false;
         }
@@ -248,6 +259,7 @@ export const startPlugin = traceFunction("startPlugin", function startPlugin(p: 
             try {
                 registerCommand(cmd, name);
             } catch (e) {
+                recordPluginIssue(name, "Command registration failed");
                 logger.error(`Failed to register command ${cmd.name}\n`, e);
                 return false;
             }
@@ -317,6 +329,7 @@ export const stopPlugin = traceFunction("stopPlugin", function stopPlugin(p: Plu
         try {
             p.stop();
         } catch (e) {
+            recordPluginIssue(name, "Shutdown failed");
             logger.error(`Failed to stop ${name}\n`, e);
             return false;
         }
@@ -379,6 +392,7 @@ export const stopPlugin = traceFunction("stopPlugin", function stopPlugin(p: Plu
 }, p => `stopPlugin ${p.name}`);
 
 export const initPluginManager = onlyOnce(function init() {
+    isSafeMode = Settings.safeMode;
     const pluginsValues = Object.values(Plugins);
     const settings = Settings.plugins;
 
@@ -390,6 +404,20 @@ export const initPluginManager = onlyOnce(function init() {
     ];
 
     const neededApiPlugins = new Set<string>();
+
+    if (isSafeMode) {
+        const required = pluginsValues.filter(p => p.required);
+        const visited = new Set(required.map(p => p.name));
+        for (const p of required) {
+            for (const name of p.dependencies ?? []) {
+                const dependency = Plugins[name];
+                if (!dependency || visited.has(name)) continue;
+                visited.add(name);
+                dependency.isDependency = true;
+                required.push(dependency);
+            }
+        }
+    }
 
     // First round-trip to mark and force enable dependencies
     //
@@ -410,7 +438,7 @@ export const initPluginManager = onlyOnce(function init() {
                 return;
             }
 
-            settings[d].enabled = true;
+            if (!isSafeMode) settings[d].enabled = true;
             dep.isDependency = true;
         });
 
@@ -440,7 +468,7 @@ export const initPluginManager = onlyOnce(function init() {
 
     for (const p of neededApiPlugins) {
         Plugins[p].isDependency = true;
-        settings[p].enabled = true;
+        if (!isSafeMode) settings[p].enabled = true;
     }
 
     for (const p of pluginsValues) {

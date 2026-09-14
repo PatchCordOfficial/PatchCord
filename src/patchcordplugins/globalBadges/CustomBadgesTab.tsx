@@ -177,7 +177,7 @@ function CustomBadgesTab() {
             Toasts.show({
                 id: Toasts.genId(),
                 message: `Failed to refresh Custom Badges: ${getLastLoadError() ?? "unknown error"}`,
-                type: Toasts.Type.DANGER
+                type: Toasts.Type.FAILURE
             });
         }
 

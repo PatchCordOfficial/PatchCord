@@ -180,7 +180,7 @@ export async function loadBadges() {
                     badge: badgeUrl
                 };
             })
-            .filter((badge): badge is Record<string, any> => badge !== null);
+            .filter(badge => badge !== null);
 
         if (rawBadges.length && !filteredUsers[key].length) {
             logger.debug("All badges filtered out for user", { userId: key, rawBadges });

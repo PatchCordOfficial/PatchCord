@@ -19,7 +19,7 @@
 import "./styles.css";
 
 import * as DataStore from "@api/DataStore";
-import { isPluginEnabled, stopPlugin } from "@api/PluginManager";
+import { isPluginEnabled, isSafeMode, stopPlugin } from "@api/PluginManager";
 import { useSettings } from "@api/Settings";
 import { Button } from "@components/Button";
 import { Card } from "@components/Card";
@@ -122,7 +122,7 @@ export const ExcludedReasons: Record<"web" | "discordDesktop" | "vesktop" | "equ
     vesktop: "Vesktop/Equibop apps",
     equibop: "Vesktop/Equibop apps",
     web: "Vesktop/Equibop apps & Discord web",
-    dev: "Developer version of Equicord"
+    dev: "Developer version of PatchCord"
 };
 
 function ExcludedPluginsList({ search }: { search: string; }) {
@@ -410,6 +410,7 @@ export default function PluginSettings() {
 
     return (
         <SettingsTab>
+            {isSafeMode && <Paragraph>Safe Mode is active. Restart normally from PatchCord settings to restore your plugins.</Paragraph>}
             <ReloadRequiredCard
                 required={changes.hasChanges}
                 enabledPlugins={enabledPlugins}
@@ -462,7 +463,7 @@ export default function PluginSettings() {
                             { label: "Show All", value: SearchStatus.ALL, default: true },
                             { label: "Show Enabled", value: SearchStatus.ENABLED },
                             { label: "Show Disabled", value: SearchStatus.DISABLED },
-                            { label: "Show Equicord", value: SearchStatus.EQUICORD },
+                            { label: "Show upstream plugins", value: SearchStatus.EQUICORD },
                             { label: "Show Patchcord", value: SearchStatus.PATCHCORD },
                             { label: "Show Vencord", value: SearchStatus.VENCORD },
                             { label: "Show New", value: SearchStatus.NEW },

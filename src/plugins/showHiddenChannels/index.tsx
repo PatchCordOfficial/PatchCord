@@ -71,7 +71,7 @@ function refreshGuildChannels(guildId: string | null | undefined) {
     if (!guildId) return;
 
     try {
-        const channels = GuildChannelStore.getChannels(guildId as any, true as any);
+        const channels = GuildChannelStore.getChannels(guildId);
         const flatChannels: Channel[] = [];
 
         for (const value of Object.values(channels ?? {})) {
@@ -227,7 +227,7 @@ export default definePlugin({
     name: "ShowHiddenChannels",
     description: "Show channels that you do not have access to view.",
     tags: ["Servers", "Utility"],
-    authors: [Devs.BigDuck, Devs.AverageReactEnjoyer, Devs.D3SOX, Devs.Ven, Devs.Nuckyz, Devs.Nickyux, Devs.Rini, EquicordDevs.Oggetto],
+    authors: [Devs.BigDuck, Devs.AverageReactEnjoyer, Devs.D3SOX, Devs.Ven, Devs.Nuckyz, Devs.Nickyux, Devs.Rini, EquicordDevs.Oggetto, EquicordDevs.Solar],
     isModified: true,
     settings,
 

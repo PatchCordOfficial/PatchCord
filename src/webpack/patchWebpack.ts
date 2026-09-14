@@ -5,7 +5,7 @@
  */
 
 import { Settings } from "@api/Settings";
-import { reporterData } from "@debug/reporterData";
+import { recordPluginIssue, reporterData } from "@debug/reporterData";
 import { traceFunctionWithResults } from "@debug/Tracer";
 import { makeLazy } from "@utils/lazy";
 import { Logger } from "@utils/Logger";
@@ -570,6 +570,7 @@ function patchFactory(moduleId: PropertyKey, originalFactory: AnyModuleFactory):
 
                 if (newCode === code) {
                     if (!(patch.noWarn || replacement.noWarn)) {
+                        recordPluginIssue(patch.plugin, "Patch had no effect");
                         logger.warn(`Patch by ${patch.plugin} had no effect (Module id is ${String(moduleId)}): ${replacement.match}`);
                         if (IS_DEV) {
                             logger.debug("Function Source:\n", code);
@@ -619,6 +620,7 @@ function patchFactory(moduleId: PropertyKey, originalFactory: AnyModuleFactory):
                 // FIXME: Maybe fix this properly
                 const shouldSuppressError = patch.plugin === "ContextMenuAPI" && err instanceof SyntaxError && err.message.includes("arguments");
                 if (!shouldSuppressError) {
+                    recordPluginIssue(patch.plugin, "Patch failed");
                     logger.error(`Patch by ${patch.plugin} errored (Module id is ${String(moduleId)}): ${replacement.match}\n`, err);
 
                     if (IS_COMPANION_TEST)

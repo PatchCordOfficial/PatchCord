@@ -52,3 +52,11 @@ export const reporterData: ReporterData = {
         mapMangledModule: []
     }
 };
+
+export const pluginIssues = new Map<string, Set<string>>();
+
+export function recordPluginIssue(plugin: string, issue: string) {
+    const issues = pluginIssues.get(plugin) ?? new Set<string>();
+    issues.add(issue);
+    pluginIssues.set(plugin, issues);
+}

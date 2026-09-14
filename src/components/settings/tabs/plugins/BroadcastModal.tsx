@@ -1,6 +1,7 @@
+import type { RenderModalProps as ModalProps } from "@vencord/discord-types";
 import { Button } from "@components/Button";
 import { DataStore } from "@api/index";
-import { Modal, ModalProps, React, TextInput, Toasts, useEffect, useState } from "@webpack/common";
+import { Modal, React, TextInput, Toasts, useEffect, useState } from "@webpack/common";
 
 const BROADCAST_ENDPOINT = "https://patchcord.itssolar.dev/broadcast/api/broadcast.php";
 const SECRET_STORAGE_KEY = "PatchCord_BroadcastSecret";

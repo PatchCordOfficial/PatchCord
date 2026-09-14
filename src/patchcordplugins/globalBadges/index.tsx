@@ -20,7 +20,7 @@ import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 
 import CustomBadgesTab from "./CustomBadgesTab";
 import { settings } from "./settings";
-import { cl, getGlobalBadges, grantNewUserBadgeIfNeeded, INVITE_LINK, loadBadges } from "./utils";
+import { cl, getGlobalBadges, getLastLoadError, grantNewUserBadgeIfNeeded, INVITE_LINK, loadBadges } from "./utils";
 
 let intervalId: any;
 

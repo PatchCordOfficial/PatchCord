@@ -1,0 +1,131 @@
+#vc-splash-root {
+    --vc-splash-accent: #bcf47b;
+    --vc-splash-muted: #98a7a3;
+    position: fixed;
+    inset: 0;
+    z-index: 2147483647;
+    overflow: auto;
+    color: #f0f5ed;
+    background: radial-gradient(ellipse at 80% 15%, #25433a55, transparent 50%), radial-gradient(ellipse at 12% 90%, #26393266, transparent 45%), #0c1210;
+    font: 14px/1.5 "Segoe UI", system-ui, sans-serif;
+    color-scheme: dark;
+    isolation: isolate;
+}
+#vc-splash-root *, #vc-splash-root *::before, #vc-splash-root *::after { box-sizing: border-box; }
+#vc-splash-root [hidden] { display: none; }
+#vc-splash-root button, #vc-splash-root input, #vc-splash-root select { font: inherit; -webkit-app-region: no-drag; }
+#vc-splash-root button { color: #dce6dc; background: #ffffff06; border: 1px solid #ffffff19; border-radius: 9px; padding: 10px 15px; cursor: pointer; transition: background 140ms, border-color 140ms; }
+#vc-splash-root button:hover { background: #ffffff10; border-color: #bdf47b66; }
+#vc-splash-root button:disabled { opacity: .45; cursor: wait; }
+#vc-splash-root :focus-visible { outline: 2px solid var(--vc-splash-accent); outline-offset: 4px; }
+#vc-splash-root input, #vc-splash-root select { accent-color: var(--vc-splash-accent); }
+#vc-splash-root h1, #vc-splash-root h2, #vc-splash-root h3, #vc-splash-root p { margin: 0; }
+#vc-splash-root .vc-splash-shell { max-width: 1192px; padding: 32px 44px 20px; margin: auto; min-height: 100%; display: flex; flex-direction: column; }
+#vc-splash-root .vc-splash-header { display: flex; align-items: center; gap: 24px; padding-bottom: 26px; border-bottom: 1px solid #ffffff12; }
+#vc-splash-root .vc-splash-brand { display: flex; gap: 12px; align-items: center; font-size: 19px; font-weight: 700; letter-spacing: -.5px; }
+#vc-splash-root .vc-splash-brand small { display: block; font-size: 11px; color: var(--vc-splash-muted); font-weight: 400; letter-spacing: .1px; }
+#vc-splash-root .vc-splash-mark { display: grid; place-content: center; width: 44px; height: 44px; border-radius: 14px; background: var(--vc-splash-accent); color: #17251b; font-size: 29px; font-weight: 900; letter-spacing: -4px; position: relative; padding-right: 12px; }
+#vc-splash-root .vc-splash-mark span { position: absolute; left: 23px; top: 10px; font-size: 23px; }
+#vc-splash-root .vc-splash-tabs { display: flex; gap: 6px; margin-left: auto; }
+#vc-splash-root .vc-splash-tabs button { background: transparent; border-color: transparent; padding: 8px 14px; font-size: 12px; color: var(--vc-splash-muted); }
+#vc-splash-root .vc-splash-tabs button[aria-current="page"] { color: var(--vc-splash-accent); background: #bcf47b0d; border-color: #bcf47b24; }
+#vc-splash-root .vc-splash-icon-button { border: 0; background: transparent; padding: 8px; }
+#vc-splash-root main { flex: 1; display: grid; align-content: center; padding: 38px 0; }
+#vc-splash-root .vc-splash-overview { display: grid; grid-template-columns: 1.25fr 1fr; gap: 58px; align-items: center; }
+#vc-splash-root .vc-splash-eyebrow { color: var(--vc-splash-accent); font-size: 10px; font-weight: 700; letter-spacing: 2px; display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+#vc-splash-root .vc-splash-dot { display: inline-block; flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: var(--vc-splash-accent); box-shadow: 0 0 12px #bcf47b44; }
+#vc-splash-root h1 { font-size: clamp(40px, 5.3vw, 68px); line-height: 1.05; letter-spacing: -3px; font-weight: 650; }
+#vc-splash-root h1 em { font-family: Georgia, serif; font-weight: 400; color: var(--vc-splash-accent); }
+#vc-splash-root .vc-splash-intro { color: var(--vc-splash-muted); margin-top: 24px; font-size: 15px; line-height: 1.8; }
+#vc-splash-root .vc-splash-main-actions { display: flex; gap: 10px; margin-top: 26px; flex-wrap: wrap; }
+#vc-splash-root .vc-splash-primary { background: var(--vc-splash-accent); color: #182416; border-color: var(--vc-splash-accent); font-weight: 650; padding: 12px 18px; }
+#vc-splash-root .vc-splash-primary:hover { background: #d3ffa2; }
+#vc-splash-root .vc-splash-primary span { margin-left: 24px; }
+#vc-splash-root .vc-splash-stats { display: flex; gap: 28px; margin-top: 34px; }
+#vc-splash-root .vc-splash-stats strong { display: block; font-size: 25px; font-weight: 500; letter-spacing: -1px; }
+#vc-splash-root .vc-splash-stats span { font-size: 10px; color: var(--vc-splash-muted); }
+#vc-splash-root .vc-splash-tip { margin-top: 32px; padding-top: 20px; border-top: 1px solid #ffffff12; }
+#vc-splash-root .vc-splash-tip > span { color: #82958b; font-size: 9px; letter-spacing: 1.5px; }
+#vc-splash-root .vc-splash-tip p { color: #b6c4ba; font-size: 12px; margin-top: 8px; min-height: 36px; }
+#vc-splash-root .vc-splash-tip button { border: 0; padding: 8px 0 0; color: var(--vc-splash-accent); background: transparent; font-size: 11px; }
+#vc-splash-root .vc-splash-launch { background: linear-gradient(155deg, #ffffff08, #ffffff02); border: 1px solid #ffffff18; border-radius: 22px; padding: 23px 27px; box-shadow: 0 20px 80px #0003; }
+#vc-splash-root .vc-splash-card-top { display: flex; justify-content: space-between; color: #849a8b; font-size: 9px; letter-spacing: 1.6px; }
+#vc-splash-root #vc-splash-elapsed { font-variant-numeric: tabular-nums; }
+#vc-splash-root .vc-splash-orbit { height: 160px; display: grid; place-items: center; position: relative; }
+#vc-splash-root .vc-splash-ring { width: 142px; height: 142px; border: 1px solid #bcf47b22; border-radius: 50%; position: absolute; animation: vc-splash-orbit 18s linear infinite; }
+#vc-splash-root .vc-splash-ring::after { content: ""; position: absolute; top: 10px; left: 27px; width: 7px; height: 7px; background: var(--vc-splash-accent); border-radius: 50%; box-shadow: 0 0 15px #bcf47b66; }
+#vc-splash-root .vc-splash-monogram { width: 91px; height: 91px; border-radius: 27px; background: linear-gradient(135deg, #e0ffb6, #88b852); color: #1f3718; font-size: 65px; font-weight: 900; line-height: 91px; padding-left: 15px; letter-spacing: -8px; transform: rotate(-9deg); box-shadow: 0 0 60px #aadd7220, inset 0 2px 1px #fff9; position: relative; }
+#vc-splash-root .vc-splash-monogram span { position: absolute; font-size: 46px; left: 52px; top: 8px; }
+#vc-splash-root .vc-splash-monogram i { position: absolute; width: 20px; height: 20px; bottom: -5px; right: -4px; background: #e5ffc3; border: 4px solid #253420; border-radius: 50%; }
+#vc-splash-root .vc-splash-status { text-align: center; }
+#vc-splash-root .vc-splash-status h2 { font-size: 19px; font-weight: 550; }
+#vc-splash-root .vc-splash-status p { color: var(--vc-splash-muted); font-size: 11px; margin-top: 6px; min-height: 34px; }
+#vc-splash-root .vc-splash-progress { height: 3px; background: #ffffff0c; border-radius: 5px; overflow: hidden; margin: 16px 0 20px; }
+#vc-splash-root .vc-splash-progress span { display: block; width: 30%; height: 100%; background: var(--vc-splash-accent); animation: vc-splash-progress 2s ease-in-out infinite alternate; }
+#vc-splash-root[data-ready="true"] .vc-splash-progress span { width: 100%; animation: none; }
+#vc-splash-root .vc-splash-stages { list-style: none; padding: 0; margin: 0; }
+#vc-splash-root .vc-splash-stages li { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #ffffff0a; font-size: 11px; color: #b4c1b6; }
+#vc-splash-root .vc-splash-stages li > span { color: #6b806f; font-size: 10px; }
+#vc-splash-root .vc-splash-stages b { margin-left: auto; font-weight: 400; color: #758779; font-size: 10px; }
+#vc-splash-root .vc-splash-stages li[data-state="done"] b { color: var(--vc-splash-accent); }
+#vc-splash-root .vc-splash-update { display: flex; gap: 10px; align-items: center; margin-top: 17px; }
+#vc-splash-root .vc-splash-update strong { font-size: 11px; font-weight: 500; }
+#vc-splash-root .vc-splash-update small { display: block; color: var(--vc-splash-muted); font-size: 10px; }
+#vc-splash-root .vc-splash-update button { margin-left: auto; padding: 6px 9px; font-size: 10px; }
+#vc-splash-root .vc-splash-shortcuts { border-top: 1px solid #ffffff12; border-bottom: 1px solid #ffffff12; padding: 14px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+#vc-splash-root .vc-splash-shortcuts > span { font-size: 9px; letter-spacing: 1px; color: #82958b; margin-right: auto; }
+#vc-splash-root .vc-splash-shortcuts button { padding: 7px 10px; font-size: 11px; background: transparent; border-color: transparent; }
+#vc-splash-root .vc-splash-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 17px; color: #8b9c90; font-size: 10px; }
+#vc-splash-root .vc-splash-audio { display: flex; gap: 10px; align-items: center; }
+#vc-splash-root .vc-splash-audio button { border: 0; padding: 0; background: none; font-size: 10px; }
+#vc-splash-root .vc-splash-audio input { width: 78px; }
+#vc-splash-root .vc-splash-footer label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+#vc-splash-root .vc-splash-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-bottom: 26px; }
+#vc-splash-root .vc-splash-section-heading .vc-splash-eyebrow { margin-bottom: 10px; }
+#vc-splash-root .vc-splash-section-heading h2 { font-size: 30px; line-height: 1.2; letter-spacing: -1px; }
+#vc-splash-root .vc-splash-section-heading p, #vc-splash-root .vc-splash-attribution { color: var(--vc-splash-muted); font-size: 12px; margin-top: 10px; }
+#vc-splash-root .vc-splash-filters { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; }
+#vc-splash-root .vc-splash-filters input, #vc-splash-root .vc-splash-filters select { border: 1px solid #ffffff20; background: #111c16; color: #dde8de; border-radius: 8px; padding: 10px 12px; }
+#vc-splash-root .vc-splash-filters input { flex: 1; min-width: 0; }
+#vc-splash-root #vc-splash-dev-count { font-size: 11px; color: var(--vc-splash-muted); }
+#vc-splash-root .vc-splash-dev-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-height: 350px; overflow: auto; padding: 4px; }
+#vc-splash-root .vc-splash-dev { display: flex; align-items: flex-start; gap: 12px; padding: 18px; border: 1px solid #ffffff14; border-radius: 13px; background: #ffffff03; min-width: 0; }
+#vc-splash-root .vc-splash-dev > span { display: grid; place-content: center; flex-shrink: 0; width: 36px; height: 36px; border-radius: 11px; background: #bcf47b10; color: var(--vc-splash-accent); font-size: 13px; font-weight: 600; }
+#vc-splash-root .vc-splash-dev > div { min-width: 0; }
+#vc-splash-root .vc-splash-dev strong { display: block; overflow-wrap: anywhere; font-size: 12px; }
+#vc-splash-root .vc-splash-dev small { display: block; color: var(--vc-splash-muted); font-size: 10px; margin-top: 3px; }
+#vc-splash-root .vc-splash-dev button { border: 0; background: none; padding: 8px 0 0; font-size: 10px; color: var(--vc-splash-accent); }
+#vc-splash-root .vc-splash-attribution { margin-top: 18px; }
+#vc-splash-root .vc-splash-diagnostic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+#vc-splash-root .vc-splash-card { background: #ffffff03; border: 1px solid #ffffff14; padding: 22px; border-radius: 14px; max-height: 300px; overflow: auto; }
+#vc-splash-root h3 { font-size: 14px; font-weight: 550; }
+#vc-splash-root .vc-splash-card p { color: var(--vc-splash-muted); font-size: 12px; margin: 12px 0; }
+#vc-splash-root .vc-splash-card ol, #vc-splash-root .vc-splash-card ul { padding-left: 18px; font-size: 12px; color: #c8d6cb; }
+#vc-splash-root .vc-splash-card li { margin: 10px 0; }
+#vc-splash-root .vc-splash-recovery { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 20px; margin-top: 20px; border: 1px solid #bcf47b25; border-radius: 14px; }
+#vc-splash-root .vc-splash-recovery > div { flex: 1; min-width: 230px; }
+#vc-splash-root .vc-splash-recovery p { font-size: 12px; color: var(--vc-splash-muted); margin-top: 7px; }
+#vc-splash-root .vc-splash-feedback { position: sticky; bottom: 12px; border: 1px solid #bcf47b44; background: #1b2b20; color: #e7f5e4; padding: 12px 18px; border-radius: 10px; font-size: 12px; margin-top: 12px; }
+@keyframes vc-splash-orbit { to { transform: rotate(360deg); } }
+@keyframes vc-splash-progress { to { transform: translateX(235%); } }
+@media (prefers-reduced-motion: reduce) { #vc-splash-root *, #vc-splash-root *::before, #vc-splash-root *::after { animation: none; transition: none; } }
+@media (max-width: 850px) {
+    #vc-splash-root .vc-splash-shell { padding: 22px; }
+    #vc-splash-root .vc-splash-overview { gap: 26px; }
+    #vc-splash-root .vc-splash-launch { padding: 20px; }
+    #vc-splash-root .vc-splash-dev-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #vc-splash-root .vc-splash-stats { gap: 18px; }
+}
+@media (max-width: 620px) {
+    #vc-splash-root .vc-splash-header { flex-wrap: wrap; gap: 12px; }
+    #vc-splash-root .vc-splash-tabs { order: 3; margin: 0; width: 100%; }
+    #vc-splash-root .vc-splash-icon-button { margin-left: auto; }
+    #vc-splash-root .vc-splash-overview, #vc-splash-root .vc-splash-diagnostic-grid { grid-template-columns: 1fr; }
+    #vc-splash-root .vc-splash-section-heading { align-items: flex-start; flex-direction: column; }
+    #vc-splash-root .vc-splash-filters { flex-wrap: wrap; }
+    #vc-splash-root .vc-splash-filters input { flex-basis: 100%; }
+    #vc-splash-root .vc-splash-dev-grid { grid-template-columns: 1fr; }
+    #vc-splash-root .vc-splash-shortcuts > span { width: 100%; }
+    #vc-splash-root .vc-splash-orbit { height: 140px; }
+    #vc-splash-root .vc-splash-section-heading h2 { font-size: 26px; }
+}

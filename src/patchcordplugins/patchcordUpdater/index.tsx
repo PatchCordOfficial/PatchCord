@@ -28,7 +28,8 @@ const LAST_UPDATED_KEY = "PatchcordUpdater_lastUpdatedDate";
 const CHECK_INTERVAL = 1000 * 60 * 30; // 30 minutes
 const INITIAL_DELAY = 1000 * 15; // give the client a moment to finish loading
 
-let intervalId: any;
+let intervalId: ReturnType<typeof setInterval> | undefined;
+let initialTimeout: ReturnType<typeof setTimeout> | undefined;
 // Tracks which "latest" date we've already queued a notice for, so a normal
 // background re-check doesn't spam a second notice while the first one is
 // still sitting there unanswered.
@@ -46,7 +47,8 @@ async function performUpdate(version: string) {
     });
 
     try {
-        await Native.downloadAndOpenUpdate(version);
+        const result = await Native.downloadAndOpenUpdate(version);
+        if (!result.success) throw new Error(result.error);
 
         // Remember that we've updated to this exact release so we don't
         // prompt again until the manifest's "latest" date changes.
@@ -147,12 +149,15 @@ export default definePlugin({
 
     async start() {
         clearInterval(intervalId);
-        setTimeout(() => checkForUpdates(), INITIAL_DELAY);
+        initialTimeout = setTimeout(() => checkForUpdates(), INITIAL_DELAY);
         intervalId = setInterval(() => checkForUpdates(), CHECK_INTERVAL);
     },
 
     stop() {
+        clearTimeout(initialTimeout);
+        initialTimeout = undefined;
         clearInterval(intervalId);
+        intervalId = undefined;
         noticeShownFor = null;
     }
 });

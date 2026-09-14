@@ -254,7 +254,7 @@ function ShareSection() {
                             className="vc-share-textarea"
                         />
                         <Button size="small" variant={copied ? "positive" : "primary"} onClick={handleCopy}>
-                            <Flex gap="6px" align="center">
+                            <Flex gap="6px" alignItems="center">
                                 {copied ? <SvgCheck size={14} /> : <SvgCopy size={14} />}
                                 {copied ? "Copied!" : "Copy Code"}
                             </Flex>

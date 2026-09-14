@@ -105,7 +105,7 @@ export function decodeShareCode(code: string): PluginShareData {
     const trimmed = code.trim();
     const raw = trimmed.startsWith(CODE_PREFIX) ? trimmed.slice(CODE_PREFIX.length) : trimmed;
 
-    let data: PluginShareData;
+    let data: unknown;
     try {
         const bytes = fromBase64Url(raw);
         const json = new TextDecoder().decode(inflateSync(bytes));
@@ -115,10 +115,13 @@ export function decodeShareCode(code: string): PluginShareData {
         throw new Error("That doesn't look like a valid PatchCord share code.");
     }
 
-    if (!data || data.v !== 1 || !Array.isArray(data.plugins))
+    if (!data || typeof data !== "object" || !("v" in data) || data.v !== 1
+        || !("mode" in data) || (data.mode !== "all" && data.mode !== "specific")
+        || !("plugins" in data) || !Array.isArray(data.plugins)
+        || !data.plugins.every((name: unknown): name is string => typeof name === "string" && name.length > 0 && name.length <= 100))
         throw new Error("That doesn't look like a valid PatchCord share code.");
 
-    return data;
+    return { v: 1, mode: data.mode, plugins: [...new Set<string>(data.plugins)] };
 }
 
 /**
@@ -131,9 +134,9 @@ export function applyShareData(data: PluginShareData, selected?: string[]): Appl
 
     const result: ApplyShareResult = { enabled: [], alreadyEnabled: [], missing: [], restartNeeded: false };
 
-    for (const name of names) {
+    for (const name of new Set(names)) {
         const plugin = Plugins[name];
-        if (!plugin) {
+        if (!Object.hasOwn(Plugins, name) || plugin.required || plugin.hidden) {
             result.missing.push(name);
             continue;
         }

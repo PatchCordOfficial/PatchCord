@@ -14,6 +14,7 @@ import {
     clearIndividualLog,
     formatTimestamp,
     getChangelogHistory,
+    getNewSettingsEntries,
     initializeChangelog,
 } from "./changelogManager";
 
@@ -153,7 +154,7 @@ function detectCommitType(msg: string): CommitType {
     return "other";
 }
 
-const TYPE_CONFIG: Record<CommitType, { label: string; color: string; bg: string; Icon: () => JSX.Element; }> = {
+const TYPE_CONFIG: Record<CommitType, { label: string; color: string; bg: string; Icon: () => React.JSX.Element; }> = {
     addition: { label: "Added",   color: "#3ba55d", bg: "rgba(59,165,93,0.13)",  Icon: () => <SvgPlus /> },
     fix:      { label: "Fixed",   color: "#5865f2", bg: "rgba(88,101,242,0.13)", Icon: () => <SvgWrench /> },
     removal:  { label: "Removed", color: "#ed4245", bg: "rgba(237,66,69,0.13)",  Icon: () => <SvgMinus /> },
@@ -252,7 +253,8 @@ function SessionCard({ log, index, onDelete }: {
 
     const fromShort = log.fromHash === "unknown" ? "initial" : log.fromHash.slice(0, 7);
     const toShort = log.toHash.slice(0, 7);
-    const hasContent = log.commits.length > 0 || log.newPlugins.length > 0 || log.updatedPlugins.length > 0;
+    const newSettings = getNewSettingsEntries(log.newSettings);
+    const hasContent = log.commits.length > 0 || log.newPlugins.length > 0 || log.updatedPlugins.length > 0 || newSettings.length > 0;
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -312,6 +314,16 @@ function SessionCard({ log, index, onDelete }: {
 
             {expanded && hasContent && (
                 <div className="vc-cl2-session-body">
+                    {newSettings.length > 0 && (
+                        <div className="vc-cl2-section">
+                            <div className="vc-cl2-section-title">New Settings</div>
+                            <div className="vc-cl2-plugin-tags">
+                                {newSettings.map(([plugin, names]) => (
+                                    <span key={plugin} className="vc-cl2-plugin-tag new">{plugin}: {names.join(", ")}</span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     {log.commits.length > 0 && (
                         <div className="vc-cl2-section">
                             <div className="vc-cl2-section-title">

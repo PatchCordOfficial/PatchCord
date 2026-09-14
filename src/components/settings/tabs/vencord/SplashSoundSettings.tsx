@@ -161,7 +161,7 @@ export function SplashSoundSettings() {
     return (
         <div className={Margins.bottom16}>
             <Heading>Startup Sound</Heading>
-            <Paragraph className={Margins.bottom12}>
+            <Paragraph className={Margins.bottom16}>
                 PatchCord plays a soft chime while it boots. Turn it off entirely, or swap it out for your own track below.
             </Paragraph>
 
@@ -192,7 +192,7 @@ export function SplashSoundSettings() {
                         value={!!audio && settings.splashScreenUseCustomAudio}
                         disabled={!audio}
                         onChange={v => { settings.splashScreenUseCustomAudio = v; }}
-                        className={Margins.bottom12}
+                        className={Margins.bottom16}
                         hideBorder
                     />
 
@@ -275,7 +275,7 @@ export function SplashSoundSettings() {
                                 </>
                             ) : (
                                 <div className={cl("empty-state")}>
-                                    <Paragraph className={Margins.bottom12}>
+                                    <Paragraph className={Margins.bottom16}>
                                         No custom audio pack yet. Add an mp3 or wav file to replace the default startup chime.
                                         If it has a title, artist, or cover art embedded, PatchCord will show it here automatically.
                                     </Paragraph>

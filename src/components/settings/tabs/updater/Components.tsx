@@ -109,14 +109,14 @@ export function UpdaterDashboard() {
 
                     <Flex gap="12px">
                         <Button
-                            color="brand"
+                            variant="primary"
                             onClick={markAsUpdated}
                         >
                             Download Installer
                         </Button>
                         <Button
-                            look="outlined"
-                            color="primary"
+                            variant="secondary"
+
                             onClick={async () => {
                                 await DataStore.set(LAST_UPDATED_KEY, manifest.latest);
                                 setIsOutdated(false);
@@ -139,8 +139,8 @@ export function UpdaterDashboard() {
                     You are running the latest release ({VERSION}). We'll let you know when the next update drops.
                 </Paragraph>
                 <Button
-                    look="outlined"
-                    color="green"
+                    variant="secondary"
+
                     disabled={isChecking}
                     onClick={() => checkUpdates()}
                 >

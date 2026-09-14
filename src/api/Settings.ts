@@ -40,6 +40,7 @@ export type SettingsPluginUiElements = {
 };
 
 export interface Settings {
+    safeMode: boolean;
     autoUpdate: boolean;
     autoUpdateNotification: boolean;
     useQuickCss: boolean;
@@ -109,6 +110,7 @@ export interface Settings {
 }
 
 const DefaultSettings: Settings = {
+    safeMode: false,
     autoUpdate: true,
     autoUpdateNotification: true,
     useQuickCss: true,

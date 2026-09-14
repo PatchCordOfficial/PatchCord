@@ -30,6 +30,7 @@ import { Alerts, GuildMemberStore, React, UserStore } from "@webpack/common";
 import { MacOSVibrancySettings } from "./MacVibrancySettings";
 import { NotificationSection } from "./NotificationSettings";
 import { PatchcordBanner } from "./PatchcordBanner";
+import { RecoverySection } from "./Recovery";
 import { SplashSoundSettings } from "./SplashSoundSettings";
 import { WindowsMaterialSettings } from "./WindowsMaterialSettings";
 
@@ -231,7 +232,7 @@ function EquicordSettings() {
 
             <Heading className={Margins.top20}>Client Settings</Heading>
             <Paragraph className={Margins.bottom16}>
-                Configure how Equicord behaves and integrates with Discord. These settings affect the Discord client's appearance and behavior.
+                Configure how PatchCord behaves and integrates with Discord. These settings affect the Discord client's appearance and behavior.
             </Paragraph>
             <Notice.Info className={Margins.bottom20} style={{ width: "100%" }}>
                 You can customize where this settings section appears in Discord's settings menu by configuring the{" "}
@@ -243,6 +244,8 @@ function EquicordSettings() {
                     Settings Plugin
                 </a>.
             </Notice.Info>
+
+            <RecoverySection />
 
             <Switches />
 
@@ -256,7 +259,7 @@ function EquicordSettings() {
     );
 }
 
-export default wrapTab(EquicordSettings, "Equicord Settings");
+export default wrapTab(EquicordSettings, "PatchCord Settings");
 
 export function isEquicordDonor(userId: string): boolean {
     const donorBadges = BadgeAPI.getEquicordDonorBadges(userId);
