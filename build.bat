@@ -1,0 +1,1 @@
+npx pnpm install && npx pnpm build

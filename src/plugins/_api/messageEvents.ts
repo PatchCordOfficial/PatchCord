@@ -36,13 +36,19 @@ export default definePlugin({
         },
         {
             find: ".handleSendMessage,onResize:",
-            replacement: {
-                // https://regex101.com/r/7iswuk/1
-                match: /let (\i)=\i\.\i\.parse\((\i),.+?\.getSendMessageOptions\((\{.+?\})\),.{0,100}?\};(?=.+?(\i)\.flags=)(?<=\)\(({.+?})\)\.then.+?)/,
-                replace: (m, parsedMessage, channel, contentOptions, options, props) => m +
-                    `if(await Vencord.Api.MessageEvents._handlePreSend(${channel}.id,${parsedMessage},${options},${props},${contentOptions}))` +
-                    "return{shouldClear:false,shouldRefocus:true};"
-            }
+            group: true,
+            replacement: [
+                {
+                    match: /(?<=\.then\()\i(?==>\{let\{valid:)/,
+                    replace: "async $&"
+                },
+                {
+                    match: /let (\i)=\i\.\i\.parse\((\i),.+?\.getSendMessageOptions\((\{.+?\})\),.{0,100}?\};(?=.+?(\i)\.flags=)(?<=\)\(({.+?})\)\.then.+?)/,
+                    replace: (m, parsedMessage, channel, contentOptions, options, props) => m +
+                        `if(await Vencord.Api.MessageEvents._handlePreSend(${channel}.id,${parsedMessage},${options},${props},${contentOptions}))` +
+                        "return{shouldClear:false,shouldRefocus:true};"
+                }
+            ]
         },
         {
             find: '("interactionUsernameProfile',

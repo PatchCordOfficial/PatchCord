@@ -255,7 +255,7 @@ export default definePlugin({
                 },
                 {
                     // Disallow the emoji for premium locked if the intention doesn't allow it
-                    match: /!(\i\.\i\.canUseEmojisEverywhere\(\i\))/,
+                    match: /!\(\i\|\|\i\.\i\.canUseEmojisEverywhere\(\i\)\)/,
                     replace: m => `(${m}&&!${IS_BYPASSEABLE_INTENTION})`
                 },
                 {
@@ -328,8 +328,8 @@ export default definePlugin({
                 {
                     // Call our function to decide whether the emoji link should be kept or not
                     predicate: () => settings.store.transformEmojis,
-                    match: /1!==(\i)\.length\|\|1!==\i\.length/,
-                    replace: (m, content) => `${m}||$self.shouldKeepEmojiLink(${content}[0])`
+                    match: /(?<=onlyLinkContent:)\(0,\i\.\i\)\((\i),\i\)\.onlyLinks/,
+                    replace: (m, content) => `(${m}&&!$self.shouldKeepEmojiLink(${content}[0]))`
                 },
                 {
                     // Patch the rendered message content to add fake nitro emojis or remove sticker links
@@ -717,8 +717,8 @@ export default definePlugin({
         });
     },
 
-    shouldKeepEmojiLink(link: any) {
-        return link.target && fakeNitroEmojiRegex.test(link.target);
+    shouldKeepEmojiLink(link: unknown) {
+        return typeof link === "object" && link !== null && "target" in link && typeof link.target === "string" && fakeNitroEmojiRegex.test(link.target);
     },
 
     addFakeNotice(type: FakeNoticeType, node: Array<ReactNode>, fake: boolean) {

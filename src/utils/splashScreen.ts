@@ -26,7 +26,7 @@ import gitHash from "~git-hash";
 
 const SplashLogger = /* #__PURE__*/ new Logger("SplashScreen", "#9096a0");
 
-const LOGO_URL = "http://patchcord.itssolar.dev/logo.png";
+const LOGO_URL = "https://patchcord.itssolar.dev/logo.png";
 const LOGO_MAX_WIDTH = 176;
 const LOGO_MAX_HEIGHT = 120;
 

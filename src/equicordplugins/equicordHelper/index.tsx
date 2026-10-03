@@ -11,8 +11,8 @@ import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, migratePluginToSettings, Settings } from "@api/Settings";
 import { ShieldIcon, WarningIcon } from "@components/Icons";
 import customRPC from "@plugins/customRPC";
-import { Devs, EquicordDevs, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
-import { isAnyPluginDev } from "@utils/misc";
+import { EQUIBOT_USER_ID, GUILD_ID, SUPPORT_CHANNEL_ID, SUPPORT_CHANNEL_IDS, VC_SUPPORT_CHANNEL_IDS } from "@utils/constants";
+import { isAnyPluginDev, isEquicordGuild, isEquicordSupport } from "@utils/misc";
 import definePlugin, { OptionType } from "@utils/types";
 import { StandingState } from "@vencord/discord-types/enums";
 import { findByCodeLazy, findStoreLazy } from "@webpack";
@@ -351,9 +351,12 @@ export default definePlugin({
         },
     ],
     renderMessageAccessory(props) {
+        const isSupportMessage = isEquicordGuild(props.message.channel_id) && isEquicordSupport(props.message.author.id);
+        if (!isSupportMessage && props.message.author.id !== EQUIBOT_USER_ID) return null;
+
         return (
             <>
-                <PluginButtons message={props.message} />
+                {isSupportMessage && <PluginButtons message={props.message} />}
                 <PluginCards message={props.message} />
             </>
         );

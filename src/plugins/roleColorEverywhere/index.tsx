@@ -16,9 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { isPluginEnabled } from "@api/PluginManager";
 import { definePluginSettings, Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { getCustomColorString } from "@equicordplugins/customUserColors";
+import coloredRoleText from "@patchcordplugins/coloredRoleText";
 import { Devs } from "@utils/constants";
 import { Logger } from "@utils/Logger";
 import definePlugin, { makeRange, OptionType } from "@utils/types";
@@ -112,7 +114,7 @@ export default definePlugin({
                     replace: "$1$self.RoleGroupColor(arguments[0])]"
                 },
             ],
-            predicate: () => settings.store.memberList
+            predicate: () => settings.store.memberList && !isPluginEnabled(coloredRoleText.name)
         },
         {
             find: "#{intl::THREAD_BROWSER_PRIVATE}",
@@ -221,7 +223,6 @@ export default definePlugin({
 
     RoleGroupColor: ErrorBoundary.wrap(({ id, count, title, guildId, label }: { id: string; count: number; title: string; guildId: string; label: string; }) => {
         const role = GuildRoleStore.getRole(guildId, id);
-
         return (
             <span style={{
                 color: role?.colorString,

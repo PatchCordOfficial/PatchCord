@@ -160,8 +160,8 @@ export default definePlugin({
         {
             find: 'tutorialId:"whos-online"',
             replacement: {
-                match: /\((function\(\i\)\{let\{id:.*?#{intl::CHANNEL_MEMBERS_A11Y_LABEL}.*?\}\))\}\);/,
-                replace: "($self.wrapRoleGroup($1}));",
+                match: /(?<=\i=\i\.memo\()(function\(\i\)\{let\{id:.{0,300}?#{intl::CHANNEL_MEMBERS_A11Y_LABEL}.{0,260}?children:\[\i," (?:—|\\u2014) ",\i\]\}\)\]\}\)\})(?=\),\i=\i\.memo)/,
+                replace: "$self.wrapRoleGroup($1)",
             },
         },
     ],

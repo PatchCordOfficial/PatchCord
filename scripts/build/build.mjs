@@ -230,11 +230,13 @@ await buildOrWatchAll(buildConfigs);
 
 await Promise.all([
     writeFile("dist/desktop/package.json", JSON.stringify({
-        name: "equicord",
+        name: "patchcord",
+        productName: "PatchCord",
         main: "patcher.js"
     })),
     writeFile("dist/equibop/package.json", JSON.stringify({
-        name: "equicord",
+        name: "patchcord",
+        productName: "PatchCord",
         main: "main.js"
     }))
 ]);

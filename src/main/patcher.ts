@@ -178,7 +178,7 @@ if (!IS_VANILLA) {
     app.commandLine.appendSwitch("disable-background-timer-throttling");
     app.commandLine.appendSwitch("disable-backgrounding-occluded-windows");
 } else {
-    console.log("[PatchCord] Running in vanilla mode. Not loading Equicord");
+    console.log("[PatchCord] Running in vanilla mode. Not loading PatchCord");
 }
 
 console.log("[PatchCord] Loading original Discord app.asar");

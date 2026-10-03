@@ -7,7 +7,6 @@
 import { isPluginEnabled, plugins } from "@api/PluginManager";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Logger } from "@utils/Logger";
-import { isEquicordGuild, isEquicordSupport } from "@utils/misc";
 import { Message } from "@vencord/discord-types";
 import { Button, showToast, Toasts } from "@webpack/common";
 import { JSX } from "react";
@@ -23,11 +22,10 @@ export const PluginButtons = ErrorBoundary.wrap(function PluginCards({ message }
     const matchedPlugin = matchedPlugins.sort((a, b) => b.length - a.length)[0];
     const pluginData = matchedPlugin ? plugins[matchedPlugin] : null;
 
-    const isEquicord = isEquicordGuild(message.channel_id) && isEquicordSupport(message.author.id);
     const startsWithEnabled = msg.startsWith("enable");
     const startsWithDisabled = msg.startsWith("disable");
 
-    const shouldAddPluginButtons = pluginData && isEquicord && (startsWithEnabled || startsWithDisabled);
+    const shouldAddPluginButtons = pluginData && (startsWithEnabled || startsWithDisabled);
 
     if (shouldAddPluginButtons) {
         if (pluginData.required || pluginData.name.endsWith("API")) return;
