@@ -22,17 +22,15 @@ export default definePlugin({
             replacement: [
                 {
                     // Uses the audio as-is if external, otherwise checks for an internal Discord sound.
-                    // Also force loads the internal sounds module to account for the second patch group below,
-                    // as well as accounting for not calling the module in this patch when this.type is not DISCORD.
-                    match: /(let \i=class.{0,1000}?new Audio;\i.src=)((\i\(\d+\))(?:\(`\.\/\$\{|.{0,50}concat\())this.name(\}\.mp3`\))/,
-                    replace: "$3;$1this.type!==$self.AudioType.DISCORD?this.audio:$2this.audio$4"
+                    match: /(new Audio;\i.src=)(\i\(\d+\)\(`\.\/\$\{)this.name(\}\.mp3`\))/,
+                    replace: "$1this.type!==$self.AudioType.DISCORD?this.audio:$2this.audio$3"
                 },
                 {
                     // Adds an optional persistent boolean as well as a callback and error handler to the
                     // audio player which is called after the audio finishes playing and when an error occurs.
                     // Also processes the audio before playing to apply override functions set by plugins.
                     match: /constructor\(((?:\i,){3}\i)([^)]*)\)\{[^}]+}/,
-                    replace: "constructor(options,$1$2){$self.buildPlayer(this,options,$1);}"
+                    replace: "constructor($1$2){if(typeof arguments[0]===\"string\"){$self.buildPlayer(this,{},arguments[0],arguments[1],arguments[2],arguments[3]);this.trackNotificationFailure=arguments[4]??!1}else $self.buildPlayer(this,arguments[0],arguments[1],arguments[2],arguments[3],arguments[4])}"
                 },
                 {
                     // Prevents an error from the source being cleared during destroyAudio().
@@ -67,19 +65,7 @@ export default definePlugin({
             ]
         },
         {
-            // Pass undefined for options in default Discord calls to the audio constructor.
-            find: "SoundUtils",
-            replacement: {
-                match: /return new (\i)\((.{0,50}?)(?=}function)/,
-                replace: "return new $1(undefined,$2"
-            }
-        },
-        {
             // Prevents Discord from forcing full volume for the "discodo" effect on client load.
-            // The internal sounds module being loaded on startup relies on one of these calls to volume
-            // regardless of if the "discodo" effect is enabled or not. This is due to the volume setter
-            // internally calling the ensureAudio function which is where the internal sounds module is loaded
-            // by default. To account for this, the module is force loaded in the first patch in the above group.
             find: '"UPDATE_OPEN_ON_STARTUP"',
             group: true,
             replacement: [

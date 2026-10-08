@@ -218,7 +218,7 @@ export function playAudio(audio: string, options: AudioPlayerOptions = {}): Audi
  * @returns The identified AudioType.
  */
 export function identifyAudioType(audio: string): AudioType {
-    if (defaultAudioNames().includes(audio)) return AudioType.DISCORD;
+    if (/^[\w-]+$/.test(audio)) return AudioType.DISCORD;
 
     try {
         const url = new URL(audio);
