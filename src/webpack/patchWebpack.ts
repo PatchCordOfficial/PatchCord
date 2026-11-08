@@ -205,13 +205,22 @@ define(Function.prototype, "m", {
 
             // Overwrite Webpack's defineExports function to define the export descriptors configurable.
             // This is needed so we can later blacklist specific exports from Webpack search by making them non-enumerable
-            this.d = function (exports, definition) {
+            this.d = function (exports, definition, values?: Record<string, unknown>) {
                 for (const key in definition) {
                     if (Object.hasOwn(definition, key) && !Object.hasOwn(exports, key)) {
                         Object.defineProperty(exports, key, {
                             enumerable: true,
                             configurable: true,
                             get: definition[key],
+                        });
+                    }
+                }
+                for (const key in values) {
+                    if (Object.hasOwn(values, key) && !Object.hasOwn(exports, key)) {
+                        Object.defineProperty(exports, key, {
+                            enumerable: true,
+                            configurable: true,
+                            value: values[key],
                         });
                     }
                 }
@@ -427,6 +436,7 @@ function runFactoryWithWrap(patchedFactory: PatchedModuleFactory, thisArg: unkno
         return originalFactory.apply(thisArg, argArray);
     }
 
+    module.loaded = true;
     exports = module.exports;
 
     if (typeof require === "function" && require.c) {
